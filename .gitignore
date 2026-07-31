@@ -48,3 +48,5 @@ DerivedData
 *.keystore
 *.jks
 !debug.keystore
+keystore.properties
+android/keystore.properties
