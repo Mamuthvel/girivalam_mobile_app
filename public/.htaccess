@@ -1,0 +1,15 @@
+# Ensure React Router (SPA) works on Bluehost/Apache by rewriting all non-file requests to index.html
+# Place this in the deploy folder (Vite copies everything from /public to /dist on build)
+
+<IfModule mod_rewrite.c>
+  Options -MultiViews
+  RewriteEngine On
+
+  # If the request is for an existing file or directory, serve it normally
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Otherwise, serve the SPA entry point
+  RewriteRule . index.html [L]
+</IfModule>

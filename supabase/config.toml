@@ -1,0 +1,13 @@
+project_id = "czcbusmgirrbezojrxss"
+
+[functions.notify-admin-support]
+verify_jwt = false
+
+[functions.guide-ai-answer]
+verify_jwt = false
+
+[functions.guide-ai-suggest]
+verify_jwt = false
+
+[functions.annadhanam-reminders]
+verify_jwt = false

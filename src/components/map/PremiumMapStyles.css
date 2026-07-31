@@ -1,0 +1,659 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PremiumMapStyles.css
+   Premium Girivalam Map — Marker & Popup Design System
+   Font: Inter / system-ui  |  Design: Instagram + Snap Map inspired
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ─── CSS Variables ──────────────────────────────────────────────── */
+:root {
+  --map-font: "Inter", "SF Pro Display", system-ui, sans-serif;
+  --map-radius-sm: 8px;
+  --map-radius-md: 14px;
+  --map-radius-lg: 20px;
+  --map-radius-pill: 999px;
+  --map-shadow-sm: 0 2px 8px rgba(0,0,0,.18);
+  --map-shadow-md: 0 4px 20px rgba(0,0,0,.22);
+  --map-shadow-lg: 0 8px 40px rgba(0,0,0,.30);
+  --map-glass-bg: rgba(255,255,255,.88);
+  --map-glass-border: rgba(255,255,255,.60);
+  --map-glass-dark-bg: rgba(15,15,25,.82);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM LANDMARK MARKERS  (pm-*)
+   Drop-pin shape: circle body + tiny triangular tail
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pm-wrapper { background: transparent !important; border: none !important; }
+
+.pm-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.28));
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), filter .18s ease;
+  cursor: pointer;
+  font-family: var(--map-font);
+}
+
+.pm-root:hover {
+  transform: translateY(-4px) scale(1.08);
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.38));
+}
+
+.pm-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 2px var(--pm-glow), 0 0 14px 4px var(--pm-glow);
+  animation: pm-ring-pulse 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pm-ring-pulse {
+  0%, 100% { opacity: .55; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.08); }
+}
+
+.pm-body {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(255,255,255,.95);
+  position: relative;
+  z-index: 1;
+}
+
+.pm-svg {
+  width: 56%;
+  height: 56%;
+  pointer-events: none;
+}
+
+.pm-svg svg { width: 100%; height: 100%; }
+
+.pm-tail {
+  width: 8px;
+  height: 8px;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  margin-top: -2px;
+  position: relative;
+  z-index: 0;
+}
+
+/* Selected state */
+.pm-root.pm-selected .pm-body { border-color: #fff; transform: scale(1.18); }
+.pm-root.pm-selected .pm-ring { animation: pm-ring-pulse-fast 1.2s ease-in-out infinite; }
+
+@keyframes pm-ring-pulse-fast {
+  0%, 100% { opacity: .8; transform: scale(1); }
+  50%       { opacity: 1;  transform: scale(1.12); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASSMORPHISM POPUP  (glass-popup, gp-*)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Strip all Leaflet default popup chrome */
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip-container { display: none !important; }
+
+.glass-popup {
+  font-family: var(--map-font);
+  background: var(--map-glass-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid var(--map-glass-border);
+  border-radius: var(--map-radius-lg);
+  box-shadow: var(--map-shadow-lg);
+  padding: 0;
+  min-width: 240px;
+  max-width: 300px;
+  overflow: hidden;
+  animation: gp-enter .22s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes gp-enter {
+  from { opacity: 0; transform: scale(.88) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+.gp-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gp-color) 12%, transparent), transparent);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.gp-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--map-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gp-badge svg { width: 18px; height: 18px; }
+
+.gp-title-block { flex: 1; min-width: 0; }
+
+.gp-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -.01em;
+}
+
+.gp-category {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 1px;
+}
+
+.gp-distance {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  background: rgba(0,0,0,.05);
+  padding: 3px 8px;
+  border-radius: var(--map-radius-pill);
+  white-space: nowrap;
+}
+
+.gp-desc {
+  font-size: 13px;
+  color: #374151;
+  padding: 10px 16px 6px;
+  line-height: 1.5;
+}
+
+.gp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 16px;
+  font-size: 12px;
+  color: #4B5563;
+}
+
+.gp-icon { font-size: 14px; flex-shrink: 0; }
+
+.gp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 16px 10px;
+}
+
+.gp-chip {
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151;
+  background: rgba(0,0,0,.06);
+  border-radius: var(--map-radius-pill);
+  padding: 3px 9px;
+}
+
+.gp-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
+.gp-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: var(--map-font);
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--map-radius-md);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: opacity .15s, transform .12s;
+}
+
+.gp-btn:active { transform: scale(.96); }
+
+.gp-btn-primary { color: #fff; }
+.gp-btn-primary:hover { opacity: .88; }
+
+.gp-btn-ghost {
+  color: #374151;
+  background: rgba(0,0,0,.06);
+}
+.gp-btn-ghost:hover { background: rgba(0,0,0,.1); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SOCIAL USER MARKERS  (sum-*)
+   Instagram / Snap Map style — only for Solo & Group modes
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sum-wrapper { background: transparent !important; border: none !important; }
+
+.sum-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--map-font);
+  cursor: pointer;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,.32));
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+  animation: sum-enter .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes sum-enter {
+  from { opacity: 0; transform: scale(.6) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+
+.sum-root:hover { transform: scale(1.06) translateY(-3px); }
+
+/* "Me" marker is slightly larger */
+.sum-me .sum-card { border-width: 3px; }
+
+.sum-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(12px);
+  border: 2px solid var(--sum-ring);
+  border-radius: var(--map-radius-pill);
+  padding: 4px 12px 4px 4px;
+  min-width: 80px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 3px 16px rgba(0,0,0,.22);
+}
+
+/* Live glow border */
+.sum-live-glow .sum-card {
+  animation: sum-glow-border 2.5s ease-in-out infinite;
+}
+
+@keyframes sum-glow-border {
+  0%, 100% { box-shadow: 0 3px 16px rgba(0,0,0,.22), 0 0 0 0 var(--sum-color); }
+  50%       { box-shadow: 0 3px 16px rgba(0,0,0,.22), 0 0 0 4px color-mix(in srgb, var(--sum-color) 25%, transparent); }
+}
+
+.sum-avatar-ring {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--sum-ring);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sum-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.sum-avatar-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  border-radius: 50%;
+}
+
+/* Live green dot on avatar */
+.sum-live-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  background: #22C55E;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  z-index: 2;
+  animation: sum-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sum-dot-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.2); }
+}
+
+.sum-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sum-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+  letter-spacing: -.01em;
+}
+
+.sum-time {
+  font-size: 10px;
+  font-weight: 500;
+  color: #6B7280;
+  margin-top: 1px;
+}
+
+/* When live — time label is green */
+.sum-live-glow .sum-time { color: #16A34A; }
+
+.sum-tail {
+  width: 10px;
+  height: 10px;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  margin-top: -2px;
+  z-index: 0;
+  background: var(--sum-color);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MY LOCATION DOT  (myl-*)
+   Pulsing blue dot = current user position (not social marker)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.myl-wrapper { background: transparent !important; border: none !important; }
+
+.myl-root {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.myl-dot {
+  width: 14px;
+  height: 14px;
+  background: #2563EB;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(37,99,235,.5);
+}
+
+.myl-accuracy-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(37,99,235,.35);
+  border-radius: 50%;
+}
+
+.myl-active .myl-accuracy-ring {
+  animation: myl-ring-expand 2.2s ease-out infinite;
+}
+
+@keyframes myl-ring-expand {
+  0%   { transform: scale(1); opacity: .7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.myl-active .myl-dot {
+  animation: myl-dot-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes myl-dot-pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(37,99,235,.5); }
+  50%       { box-shadow: 0 2px 20px rgba(37,99,235,.8); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAP THEME TOGGLE  (mt-*)
+   Small pill control top-right
+   ═══════════════════════════════════════════════════════════════════ */
+
+.mt-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 800;
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(10px);
+  border-radius: var(--map-radius-pill);
+  padding: 4px;
+  box-shadow: var(--map-shadow-sm);
+  font-family: var(--map-font);
+}
+
+.mt-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  background: transparent;
+  border: none;
+  border-radius: var(--map-radius-pill);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.mt-btn.mt-active {
+  background: #111;
+  color: #fff;
+}
+
+.mt-btn:hover:not(.mt-active) { background: rgba(0,0,0,.06); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM TOOLTIP  (Leaflet default tooltip override)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.premium-tooltip-wrapper {
+  background: rgba(255,255,255,.96) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(0,0,0,.08) !important;
+  border-radius: var(--map-radius-md) !important;
+  box-shadow: var(--map-shadow-md) !important;
+  padding: 0 !important;
+  font-family: var(--map-font) !important;
+  font-size: 13px !important;
+  color: #111 !important;
+}
+
+.premium-tooltip-wrapper::before {
+  border-top-color: rgba(255,255,255,.96) !important;
+}
+
+.tooltip-inner {
+  padding: 10px 14px;
+}
+
+.tooltip-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #111;
+  margin-bottom: 2px;
+}
+
+.tooltip-sub {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MAP TILE OVERLAY  — applied when theme=dark
+   ═══════════════════════════════════════════════════════════════════ */
+
+.leaflet-container.map-dark {
+  background: #0f0f19;
+}
+
+.leaflet-container.map-dark .leaflet-control-zoom a {
+  background: rgba(20,20,30,.9);
+  color: #e5e7eb;
+  border-color: rgba(255,255,255,.12);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GIRIVALAM PATH  — premium styling
+   ═══════════════════════════════════════════════════════════════════ */
+
+.girivalam-path-line {
+  stroke: #FF6B35;
+  stroke-width: 4;
+  stroke-opacity: .85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(255,107,53,.5));
+}
+
+.girivalam-path-completed {
+  stroke: #22C55E;
+  stroke-width: 5;
+  stroke-opacity: .9;
+  filter: drop-shadow(0 0 5px rgba(34,197,94,.6));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .glass-popup {
+    min-width: 200px;
+    max-width: 260px;
+  }
+
+  .gp-title   { font-size: 13px; }
+  .gp-desc    { font-size: 12px; padding: 8px 14px 4px; }
+
+  .sum-name   { max-width: 64px; font-size: 11px; }
+  .sum-time   { font-size: 9px; }
+  .sum-card   { padding: 3px 9px 3px 3px; gap: 6px; }
+  .sum-avatar-ring { width: 28px; height: 28px; }
+
+  .mt-btn { font-size: 10px; padding: 4px 8px; }
+
+  .pmc-card { width: 52px; height: 62px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHOTO MAP CARD  (pmc-*)
+   Instagram / Snap Map style rounded-rect photo marker
+   Photo fills a 64×76px card; small triangular tail points down.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pmc-wrapper { background: transparent !important; border: none !important; }
+
+.pmc-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,.32));
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), filter .2s ease;
+  cursor: pointer;
+}
+
+.pmc-root:hover {
+  transform: scale(1.08) translateY(-3px);
+  filter: drop-shadow(0 8px 22px rgba(0,0,0,.45));
+}
+
+@keyframes pmcEnter {
+  from { opacity: 0; transform: scale(.6) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+.pmc-root { animation: pmcEnter .32s cubic-bezier(.34,1.56,.64,1); }
+
+.pmc-card {
+  position: relative;
+  width: 64px;
+  height: 76px;
+  border-radius: 14px;
+  border: 3px solid #fff;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.pmc-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 11px;
+}
+
+/* Small type-indicator badge — bottom-right of card */
+.pmc-type-dot {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.25);
+}
+.pmc-type-dot > div { display: flex; align-items: center; justify-content: center; }
+.pmc-type-dot svg { width: 100%; height: 100%; }
+
+/* Triangular tail */
+.pmc-tail {
+  width: 14px;
+  height: 10px;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  background: #fff;
+  margin-top: -2px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.08));
+}
+
+/* Popup photo strip */
+.gp-photo {
+  width: 100%;
+  height: 130px;
+  overflow: hidden;
+  border-radius: var(--map-radius-lg) var(--map-radius-lg) 0 0;
+}
+.gp-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

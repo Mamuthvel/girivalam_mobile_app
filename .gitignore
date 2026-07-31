@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+*.zip
+
+# This project standardizes on npm (package-lock.json); ignore other managers' lockfiles
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Capacitor / native build outputs
+/android/app/build
+/android/build
+/android/.gradle
+/android/captures
+/android/local.properties
+/android/app/release
+/ios/App/Pods
+/ios/App/build
+/ios/App/output
+/ios/App/App/public
+DerivedData
+*.keystore
+*.jks
+!debug.keystore

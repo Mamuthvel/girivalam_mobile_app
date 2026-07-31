@@ -1,0 +1,48 @@
+# MyGirivalam.in — robots directives
+# Public content is open to all crawlers, including AI / LLM crawlers (for AI
+# answer engines & Generative Engine Optimization). Only private, auth-gated
+# routes are disallowed.
+
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /auth
+Disallow: /my-girivalam
+Disallow: /my-girivalam-history
+Disallow: /settings
+Disallow: /saved-locations
+Disallow: /personal
+Disallow: /join
+Disallow: /support-girivalam
+Disallow: /girivalam-booknow
+
+# --- AI / LLM crawlers: explicitly welcomed (same private-route exclusions) ---
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: CCBot
+User-agent: cohere-ai
+User-agent: Bytespider
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /auth
+Disallow: /my-girivalam
+Disallow: /my-girivalam-history
+Disallow: /settings
+Disallow: /saved-locations
+Disallow: /personal
+Disallow: /join
+Disallow: /support-girivalam
+Disallow: /girivalam-booknow
+
+Sitemap: https://mygirivalam.in/sitemap.xml

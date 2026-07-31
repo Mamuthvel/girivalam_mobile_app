@@ -1,0 +1,21 @@
+{
+  "name": "MyGirivalam.in - Tiruvannamalai Spiritual Guide",
+  "short_name": "MyGirivalam",
+  "description": "Complete Tiruvannamalai Girivalam guide with live GPS tracking, temple information, and spiritual stories",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B35",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ]
+}

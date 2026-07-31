@@ -1,0 +1,176 @@
+/* ═══════════════════════════════════════════════════════════════════
+   AshtaLingamStyles.css — Premium Aṣṭa Lingam Marker Design
+   Sacred golden glow system for all 8 directional Shiva temples
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ashta-lingam-icon {
+  background: transparent !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
+/* ─── Base Marker Wrapper ──────────────────────────────────────────── */
+.ashta-lingam-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), filter .2s ease;
+  cursor: pointer;
+}
+
+.ashta-lingam-marker:hover {
+  transform: scale(1.14) translateY(-3px);
+  filter: brightness(1.1);
+}
+
+/* ─── Standard Glow Pulse ─────────────────────────────────────────── */
+@keyframes ashtaGlowPulse {
+  0%, 100% {
+    filter:
+      brightness(1)
+      drop-shadow(0 0 6px rgba(255,180,80,.55))
+      drop-shadow(0 0 14px rgba(255,180,80,.30));
+  }
+  50% {
+    filter:
+      brightness(1.12)
+      drop-shadow(0 0 14px rgba(255,200,100,.80))
+      drop-shadow(0 0 28px rgba(255,200,100,.45));
+  }
+}
+
+.ashta-glow-animation {
+  animation: ashtaGlowPulse 2.8s ease-in-out infinite;
+}
+
+/* ─── Outer Aura Ring ─────────────────────────────────────────────── */
+.ashta-lingam-marker::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 215, 0, .35);
+  animation: ashtaRingExpand 3s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ashtaRingExpand {
+  0%   { transform: scale(1);    opacity: .6; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* ─── Premium Golden Glow (nearest Lingam) ────────────────────────── */
+@keyframes premiumGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 16px rgba(255,215,0,.50),
+      0 0 32px rgba(255,165,0,.35),
+      0 0 56px rgba(255,140,0,.20);
+    filter: brightness(1.05) drop-shadow(0 0 12px rgba(255,200,0,.65));
+  }
+  50% {
+    box-shadow:
+      0 0 28px rgba(255,215,0,.75),
+      0 0 56px rgba(255,165,0,.55),
+      0 0 88px rgba(255,140,0,.30);
+    filter: brightness(1.18) drop-shadow(0 0 24px rgba(255,220,0,.90));
+  }
+}
+
+.ashta-lingam-marker.premium-glow {
+  animation: premiumGlow 2.4s ease-in-out infinite;
+}
+
+/* ─── Snake Coil Animation ────────────────────────────────────────── */
+@keyframes snakeCoil {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25%       { transform: scale(1.03) rotate(1.5deg); }
+  75%       { transform: scale(.97) rotate(-1.5deg); }
+}
+
+.ashta-lingam-marker.snake-animation {
+  animation: snakeCoil 4.2s ease-in-out infinite;
+}
+
+/* ─── Entrance Animation ──────────────────────────────────────────── */
+@keyframes ashtaEnter {
+  from { opacity: 0; transform: scale(.5) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+
+.ashta-lingam-marker {
+  animation: ashtaEnter .4s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ─── Tooltip Overrides ───────────────────────────────────────────── */
+.ashta-lingam-tooltip {
+  background: rgba(255, 255, 255, .97) !important;
+  border: 1px solid rgba(255, 165, 0, .25) !important;
+  border-radius: 14px !important;
+  padding: 0 !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,.14) !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  overflow: hidden !important;
+}
+
+.ashta-lingam-tooltip::before {
+  border-top-color: rgba(255,165,0,.25) !important;
+}
+
+.ashta-lingam-tooltip-content {
+  padding: 10px 14px;
+}
+
+.tooltip-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #FF6B35;
+  margin-bottom: 4px;
+  letter-spacing: -.01em;
+}
+
+.tooltip-direction {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 3px;
+}
+
+.tooltip-desc {
+  font-size: 11px;
+  color: #9CA3AF;
+  max-width: 200px;
+  line-height: 1.4;
+}
+
+.tooltip-timings {
+  font-size: 11px;
+  color: #FF6B35;
+  margin-top: 5px;
+  font-weight: 600;
+}
+
+/* ─── Nearest Lingam enhanced tooltip ────────────────────────────── */
+.ashta-lingam-tooltip.nearest-linga {
+  background: linear-gradient(
+    135deg,
+    rgba(255,248,220,.98),
+    rgba(255,215,0,.12)
+  ) !important;
+  border: 2px solid rgba(255,165,0,.55) !important;
+  box-shadow:
+    0 4px 20px rgba(255,165,0,.30),
+    0 0 0 3px rgba(255,215,0,.12) !important;
+}
+
+/* ─── Mobile Optimizations ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ashta-lingam-tooltip {
+    max-width: 190px !important;
+  }
+
+  .tooltip-desc {
+    max-width: 155px !important;
+  }
+}

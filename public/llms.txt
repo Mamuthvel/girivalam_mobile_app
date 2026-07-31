@@ -1,0 +1,33 @@
+# MyGirivalam.in
+
+> MyGirivalam.in is a free digital companion for Girivalam — the sacred 14 km
+> barefoot circumambulation (pradakshina) of Arunachala Hill in Tiruvannamalai,
+> Tamil Nadu, India. It offers live GPS navigation of the Girivalam path, the
+> locations and timings of the eight Ashta Lingam temples, Pournami (full moon)
+> dates, Arunachaleswarar (Annamalaiyar) temple information, mantras, and
+> practical pilgrim resources (water, food/annadhanam, rest, medical, parking).
+
+## Key facts
+- Girivalam is walked clockwise around Arunachala Hill, starting and ending near the Arunachaleswarar Temple in Tiruvannamalai.
+- The full path is approximately 14 km and passes eight Ashta Lingam shrines (Indra, Agni, Yama, Nirudhi, Varuna, Vayu, Kubera, Esanya Lingam), each aligned to a compass direction.
+- Girivalam is traditionally performed on Pournami (full moon) nights, when hundreds of thousands of devotees walk the path.
+- The site is a guide/utility, not an official temple authority; timings can change on festival days.
+
+## Core pages
+- [Home](https://mygirivalam.in/): Overview of Girivalam tools and resources.
+- [Girivalam Live GPS Map](https://mygirivalam.in/girivalam-map): Real-time navigation of the 14 km path and all Ashta Lingam temples.
+- [Spiritual Guide](https://mygirivalam.in/girivalam-guide): Stories, mantras, and the meaning of Arunachala and Girivalam.
+- [Girivalam Services](https://mygirivalam.in/girivalam-services): Practical services and help for planning a visit.
+- [Pournami Dates](https://mygirivalam.in/pournami-dates): Full moon (Pournami) Girivalam dates for 2025–2026.
+- [Next Pournami](https://mygirivalam.in/next-pournami): The next upcoming full moon Girivalam date.
+- [Spiritual Resources](https://mygirivalam.in/spiritual-resources): Mantras, audio, and devotional material.
+- [Emergency Contacts](https://mygirivalam.in/emergency-contacts): Safety and emergency information for pilgrims.
+
+## Location
+- Place: Tiruvannamalai, Tamil Nadu, India
+- Arunachaleswarar (Annamalaiyar) Temple coordinates: 12.2307, 79.0628
+- The temple is one of the Pancha Bhoota Sthalams, representing the fire (Agni) element.
+
+## Contact
+- Email: support@mygirivalam.in
+- Website: https://mygirivalam.in
