@@ -45,12 +45,16 @@ import {
   User,
   Footprints,
   Users,
+  LogIn,
   Target,
   Home,
   Sparkles,
   Mountain,
   WifiOff,
   Map as MapIcon,
+  ShieldCheck,
+  Loader2,
+  X,
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -113,11 +117,19 @@ const MapTracker = () => {
   // Show continue prompt state
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
   const [sessionInitialized, setSessionInitialized] = useState(false);
-  
-  // Use saved mode if resuming, otherwise use URL mode
-  const girivalamMode = sessionInitialized && savedState.isTracking 
-    ? savedState.mode 
-    : urlMode;
+
+  // Mode the user has chosen on the start screen (defaults to the URL's mode).
+  // Editable before a journey starts so a fresh visitor can pick Solo or Group here.
+  const [selectedMode, setSelectedMode] = useState<'solo' | 'group'>(urlMode);
+  // Keep in sync when arriving via the selection page while no session is active.
+  useEffect(() => {
+    if (!savedState.isTracking) setSelectedMode(urlMode);
+  }, [urlMode, savedState.isTracking]);
+
+  // Use saved mode if resuming, otherwise the user's current selection.
+  const girivalamMode = sessionInitialized && savedState.isTracking
+    ? savedState.mode
+    : selectedMode;
   const modeContent = useMemo(() => girivalamMode === 'group' ? GROUP_CONTENT : SOLO_CONTENT, [girivalamMode]);
   
   const [isTracking, setIsTracking] = useState(false);
@@ -136,6 +148,11 @@ const MapTracker = () => {
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown');
   const [lastLocationUpdate, setLastLocationUpdate] = useState<Date | null>(null);
+  const [locationRequestPending, setLocationRequestPending] = useState(false);
+  // First-load "Locate me" primer — dismissed choice remembered so it doesn't nag.
+  const [locationPrimerDismissed, setLocationPrimerDismissed] = useState(() => {
+    try { return localStorage.getItem('girivalam_location_primer_dismissed') === '1'; } catch { return false; }
+  });
 
   // Map control states
   const [centerOnUserTrigger, setCenterOnUserTrigger] = useState(0);
@@ -315,12 +332,36 @@ const MapTracker = () => {
     [showOnlyAshtaLingas, selectedLandmarkTypes, EMPTY_TYPES]
   );
 
-  // Redirect to preview if not logged in
+  // Guests can use the live map + solo GPS tracking (stored locally). Only
+  // account-only features (group walks, cross-device sync, history) require sign-in.
+
+  // After a guest signs in from the "Save this journey" nudge, persist the
+  // completed journey (held in localStorage) to their new account — one time.
+  const journeyBackfilledRef = useRef(false);
   useEffect(() => {
-    if (!user) {
-      navigate('/girivalam-map-preview');
-    }
-  }, [user, navigate]);
+    if (!user || journeyBackfilledRef.current) return;
+    let pending = false;
+    try { pending = sessionStorage.getItem('pendingJourneySave') === '1'; } catch { /* ignore */ }
+    if (!pending) return;
+    if (savedState.mode !== 'solo' || !savedState.girivalamCompleted) return;
+
+    journeyBackfilledRef.current = true;
+    try { sessionStorage.removeItem('pendingJourneySave'); } catch { /* ignore */ }
+
+    (async () => {
+      const id = await startSoloJourney(savedState.sessionId);
+      if (!id) return;
+      await endSoloJourney({
+        distance_km: savedState.distance,
+        steps_count: savedState.stepCount,
+        time_elapsed_seconds: savedState.timeElapsed,
+        girivalam_progress: savedState.girivalamProgress,
+        girivalam_completed: true,
+        path_history: savedState.userPathHistory,
+      });
+      toast({ title: 'Journey saved! 🙏', description: 'Your Girivalam is now in your history.' });
+    })();
+  }, [user, savedState, startSoloJourney, endSoloJourney, toast]);
 
   // Timer for elapsed time when tracking
   useEffect(() => {
@@ -859,7 +900,44 @@ const MapTracker = () => {
   }, [toast, persistStopJourney, girivalamMode, user, endSoloJourney, distance, stepCount, timeElapsed, girivalamProgress, girivalamCompleted, userPathHistory, savedState.sessionId]);
 
   // Unified Start Girivalam - one click handles everything
+  // One-tap "Locate me" — shared by the first-load primer and the map's permission banner.
+  const requestLocationOnce = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocationRequestPending(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setCurrentLocation(newLocation);
+        setLastLocation(newLocation);
+        setLastLocationUpdate(new Date());
+        setLocationPermissionStatus('granted');
+        setCenterOnUserTrigger((prev) => prev + 1);
+        setLocationRequestPending(false);
+      },
+      (error) => {
+        if (error.code === 1) setLocationPermissionStatus('denied');
+        setLocationRequestPending(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, []);
+
+  const dismissLocationPrimer = useCallback(() => {
+    setLocationPrimerDismissed(true);
+    try { localStorage.setItem('girivalam_location_primer_dismissed', '1'); } catch { /* ignore */ }
+  }, []);
+
   const startGirivalam = async () => {
+    // Group walks require an account (to create/join a group and share location).
+    if (girivalamMode === 'group' && !user) {
+      toast({
+        title: "Sign in for Group Girivalam",
+        description: "Create an account to walk with your group and share live location.",
+      });
+      navigate('/auth?redirect=/girivalam-map?mode=group');
+      return;
+    }
+
     // Step 1: Request GPS permission if not already granted
     if (locationPermissionStatus !== 'granted') {
       try {
@@ -918,9 +996,10 @@ const MapTracker = () => {
     setHasStartedGirivalam(true);
     setIsTracking(true);
     
-    // Persist the new journey (localStorage)
-    startJourney(girivalamMode, currentGroup?.id);
-    
+    // Persist the new journey (localStorage) — share the same sessionId with the DB
+    // row so resume reliably matches the original journey instead of duplicating it.
+    startJourney(girivalamMode, currentGroup?.id, sessionId);
+
     // Start solo journey in database if it's solo mode
     if (girivalamMode === 'solo' && user) {
       await startSoloJourney(sessionId);
@@ -983,8 +1062,6 @@ const MapTracker = () => {
     }
   };
 
-  if (!user) return null;
-
   // Show loading while restoring session
   if (isRestoring) {
     return (
@@ -1011,8 +1088,8 @@ const MapTracker = () => {
   return (
     <div className="min-h-screen bg-background pt-20 md:pt-24">
       <Helmet>
-        <title>Girivalam GPS Map — Live Navigation & Ashta Lingam | MyGirivalam.in</title>
-        <meta name="description" content="Live GPS map for Tiruvannamalai Girivalam. Navigate the 14km Arunachala circumambulation path, locate all 8 Ashta Lingam temples, and track your progress in real time." />
+        <title>Girivalam Map — Live Location GPS Tracker & 14 km Route | Tiruvannamalai</title>
+        <meta name="description" content="Track your Girivalam live on the map — see your GPS live location on the 14 km Arunachala route, find all 8 Ashta Lingam temples, and walk with your group in real time." />
         <link rel="canonical" href="https://mygirivalam.in/girivalam-map" />
       </Helmet>
       {/* Fixed Site Header for consistent mobile background */}
@@ -1021,6 +1098,74 @@ const MapTracker = () => {
       {/* Main Content */}
       <div className="px-4 py-6 pb-24">
         <div className="max-w-6xl mx-auto">
+          {/* Guest nudge — the map & solo tracking work without an account */}
+          {!user && (
+            <div className="mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="text-sm text-foreground/80 text-center sm:text-left">
+                <span className="font-semibold">Exploring as a guest.</span>{" "}
+                Sign in to save your journey, sync across devices, and walk with a group.
+              </p>
+              <Button
+                onClick={() => navigate('/auth?redirect=/girivalam-map')}
+                variant="outline"
+                size="sm"
+                className="shrink-0 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <LogIn className="h-4 w-4 mr-1.5" />
+                Sign in
+              </Button>
+            </div>
+          )}
+
+          {/* First-load location primer — explains WHY before the browser prompt, one tap to locate. */}
+          {!locationPrimerDismissed &&
+            (locationPermissionStatus === 'prompt' || locationPermissionStatus === 'unknown') && (
+              <div className="mb-4 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-playfair text-base font-semibold">Show me on the sacred path</h3>
+                      <button
+                        type="button"
+                        onClick={dismissLocationPrimer}
+                        aria-label="Dismiss"
+                        className="-mr-1 -mt-1 rounded-full p-1 text-muted-foreground/60 hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      We use your location to place your dot on the 14 km Girivalam route and guide you between temples.
+                    </p>
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5 text-primary/70" />
+                      Stays on your device — never shared unless you join a group.
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        onClick={requestLocationOnce}
+                        disabled={locationRequestPending}
+                        className="bg-primary hover:bg-primary/90"
+                        size="sm"
+                      >
+                        {locationRequestPending ? (
+                          <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Locating…</>
+                        ) : (
+                          <><MapPin className="mr-1.5 h-4 w-4" /> Locate me</>
+                        )}
+                      </Button>
+                      <Button onClick={dismissLocationPrimer} variant="ghost" size="sm" className="text-muted-foreground">
+                        Not now
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
           <JourneyControlCard
             girivalamMode={girivalamMode}
             modeContent={modeContent}
@@ -1032,6 +1177,7 @@ const MapTracker = () => {
             handleStopTouchEnd={handleStopTouchEnd}
             isLongPressing={isLongPressing}
             longPressProgress={longPressProgress}
+            onModeChange={setSelectedMode}
           />
 
           {/* Main Tabs - Show Groups tab only in group mode */}
@@ -1074,6 +1220,31 @@ const MapTracker = () => {
                     <p className="text-sm text-muted-foreground">
                       {modeContent.completionMessage}
                     </p>
+
+                    {/* Guest → account: capture the signup at the value moment */}
+                    {!user && (
+                      <div className="mt-4 pt-4 border-t border-primary/10">
+                        <div className="flex items-center justify-center gap-3 text-sm mb-3">
+                          <span className="font-semibold text-foreground">{girivalamDistanceCovered.toFixed(1)} km</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="font-semibold text-foreground">{visitedLandmarks.length} temples</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3 max-w-sm mx-auto">
+                          Create a free account to save this Girivalam to your history and track your progress over time.
+                        </p>
+                        <Button
+                          onClick={() => {
+                            try { sessionStorage.setItem('pendingJourneySave', '1'); } catch { /* ignore */ }
+                            navigate('/auth?redirect=/girivalam-map');
+                          }}
+                          className="bg-primary hover:bg-primary/90"
+                          size="lg"
+                        >
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Save this journey
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </SpiritualCard>
               )}
@@ -1137,27 +1308,7 @@ const MapTracker = () => {
                       permissionStatus={locationPermissionStatus}
                       lastLocation={lastLocation}
                       lastUpdate={lastLocationUpdate}
-                      onRequestPermission={() => {
-                        if (navigator.geolocation) {
-                          navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                              const newLocation = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                              };
-                              setCurrentLocation(newLocation);
-                              setLastLocation(newLocation);
-                              setLastLocationUpdate(new Date());
-                              setLocationPermissionStatus('granted');
-                            },
-                            (error) => {
-                              if (error.code === 1) {
-                                setLocationPermissionStatus('denied');
-                              }
-                            }
-                          );
-                        }
-                      }}
+                      onRequestPermission={requestLocationOnce}
                     />
 
                     {/* Map Component with Fallback */}
@@ -1266,7 +1417,7 @@ const MapTracker = () => {
                       size="sm"
                       onClick={() => {
                         // Show all landmarks
-                        setSelectedLandmarkTypes(['temple', 'water', 'food', 'toilet', 'medical', 'rest', 'parking']);
+                        setSelectedLandmarkTypes(['temple', 'water', 'food', 'toilet', 'medical', 'rest', 'parking', 'rooms']);
                         setMapFocusTypes(null);
                         toast({
                           title: "All Landmarks! 🗺️",
@@ -1306,12 +1457,33 @@ const MapTracker = () => {
             {/* Groups tab - only rendered in group mode */}
             {girivalamMode === 'group' && (
               <TabsContent value="groups">
-                <GroupManagement
-                  onGroupJoined={handleGroupJoined}
-                  currentGroup={currentGroup}
-                  userLocation={currentLocation}
-                  isTracking={isTracking}
-                />
+                {user ? (
+                  <GroupManagement
+                    onGroupJoined={handleGroupJoined}
+                    currentGroup={currentGroup}
+                    userLocation={currentLocation}
+                    isTracking={isTracking}
+                  />
+                ) : (
+                  <SpiritualCard className="p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary/10 flex items-center justify-center">
+                      <Users className="h-8 w-8 text-secondary" />
+                    </div>
+                    <h3 className="font-playfair text-xl font-semibold mb-2">Walk together as a group</h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+                      Create or join a group to share your live location with family and friends and
+                      keep everyone together on the sacred path. This needs a free account.
+                    </p>
+                    <Button
+                      onClick={() => navigate('/auth?redirect=/girivalam-map?mode=group')}
+                      className="bg-secondary hover:bg-secondary/90"
+                      size="lg"
+                    >
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign in to create or join a group
+                    </Button>
+                  </SpiritualCard>
+                )}
               </TabsContent>
             )}
 

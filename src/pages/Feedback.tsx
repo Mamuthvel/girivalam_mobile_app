@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Star, MessageSquare, CheckCircle2 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -450,6 +451,7 @@ const Feedback = () => {
           </motion.div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 };

@@ -25,10 +25,16 @@ export interface JourneyStats {
   completedGirivalams: number;   // solo girivalams marked complete
   templesCompleted: number;      // completedGirivalams * 8
   bestTimeHours: number | null;  // fastest confirmed solo girivalam
+  currentStreak: number;         // consecutive months with a completed Girivalam
   recentJourneys: RecentJourney[];
   isLoading: boolean;
   error: string | null;
 }
+
+const monthKey = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
 
 const AVERAGE_SPEED_KMH = 3.5;
 const TEMPLES_PER_GIRIVALAM = 8;
@@ -47,6 +53,7 @@ export const useJourneyStats = () => {
     completedGirivalams: 0,
     templesCompleted: 0,
     bestTimeHours: null,
+    currentStreak: 0,
     recentJourneys: [],
     isLoading: true,
     error: null,
@@ -86,6 +93,7 @@ export const useJourneyStats = () => {
         let soloTimeSec   = 0;
         let completedCount = 0;
         let bestTimeSec: number | null = null;
+        const completedMonths = new Set<string>();
 
         const recentSolo: RecentJourney[] = [];
 
@@ -97,6 +105,7 @@ export const useJourneyStats = () => {
           const isCompleted = j.girivalam_completed === true || j.status === 'completed';
           if (isCompleted) {
             completedCount++;
+            if (j.started_at) completedMonths.add(monthKey(j.started_at));
             const t = j.time_elapsed_seconds;
             if (t && (bestTimeSec === null || t < bestTimeSec)) bestTimeSec = t;
           }
@@ -126,8 +135,12 @@ export const useJourneyStats = () => {
           groupDistance += Number(m.distance_km) || 0;
           groupSteps    += m.steps_count || 0;
 
+          const mDistKm = Math.round((Number(m.distance_km) || 0) * 10) / 10;
+          if (mDistKm >= GIRIVALAM_KM && m.tracking_started_at) {
+            completedMonths.add(monthKey(m.tracking_started_at));
+          }
           if (recentGroup.length < RECENT_LIMIT) {
-            const distKm = Math.round((Number(m.distance_km) || 0) * 10) / 10;
+            const distKm = mDistKm;
             recentGroup.push({
               id:          m.id,
               type:        'group',
@@ -157,6 +170,19 @@ export const useJourneyStats = () => {
           ? Math.round((bestTimeSec / 3600) * 10) / 10
           : null;
 
+        // ── Streak: consecutive months (back from the latest) with a completed round
+        let currentStreak = 0;
+        if (completedMonths.size > 0) {
+          const latest = Array.from(completedMonths).sort().reverse()[0];
+          const [ly, lm] = latest.split('-').map(Number);
+          const cursor = new Date(ly, lm - 1, 1);
+          const keyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          while (completedMonths.has(keyOf(cursor))) {
+            currentStreak++;
+            cursor.setMonth(cursor.getMonth() - 1);
+          }
+        }
+
         // Merge + sort recent journeys by date desc, cap at RECENT_LIMIT
         const recentJourneys = [...recentSolo, ...recentGroup]
           .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
@@ -172,6 +198,7 @@ export const useJourneyStats = () => {
           completedGirivalams: completedCount,
           templesCompleted,
           bestTimeHours,
+          currentStreak,
           recentJourneys,
           isLoading: false,
           error: null,

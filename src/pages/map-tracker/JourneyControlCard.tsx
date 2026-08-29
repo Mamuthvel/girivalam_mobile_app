@@ -17,6 +17,8 @@ interface JourneyControlCardProps {
   handleStopTouchEnd: () => void;
   isLongPressing: boolean;
   longPressProgress: number;
+  /** Switch Solo/Group before the journey starts. Omit to hide the toggle. */
+  onModeChange?: (mode: "solo" | "group") => void;
 }
 
 /**
@@ -34,14 +36,48 @@ const JourneyControlCard = ({
   handleStopTouchEnd,
   isLongPressing,
   longPressProgress,
+  onModeChange,
 }: JourneyControlCardProps) => (
   <>
     {/* Mode-Specific Header */}
     <div className="text-center mb-6">
-      <Badge variant="outline" className={`mb-3 ${girivalamMode === 'group' ? 'bg-secondary/10 border-secondary/30' : 'bg-primary/10 border-primary/30'}`}>
-        <Sparkles className="h-3 w-3 mr-1" />
-        {girivalamMode === 'group' ? 'Group Mode' : 'Solo Mode'}
-      </Badge>
+      {!isTracking && onModeChange ? (
+        /* Empty / fresh-start state — both modes shown up front as the first choice */
+        <div className="mb-4 flex flex-col items-center gap-2">
+          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Choose how you'll walk</p>
+          <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => onModeChange('solo')}
+              aria-pressed={girivalamMode === 'solo'}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                girivalamMode === 'solo'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Footprints className="h-4 w-4" /> Solo
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('group')}
+              aria-pressed={girivalamMode === 'group'}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                girivalamMode === 'group'
+                  ? 'bg-secondary text-secondary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Users className="h-4 w-4" /> Group
+            </button>
+          </div>
+        </div>
+      ) : (
+        <Badge variant="outline" className={`mb-3 ${girivalamMode === 'group' ? 'bg-secondary/10 border-secondary/30' : 'bg-primary/10 border-primary/30'}`}>
+          <Sparkles className="h-3 w-3 mr-1" />
+          {girivalamMode === 'group' ? 'Group Mode' : 'Solo Mode'}
+        </Badge>
+      )}
       <h1 className="font-playfair text-3xl md:text-4xl font-bold mb-2 flex items-center justify-center gap-2">
         {girivalamMode === 'group' ? <Users className="h-8 w-8 text-secondary" /> : <Footprints className="h-8 w-8 text-primary" />}
         {modeContent.headerTitle}
@@ -58,7 +94,9 @@ const JourneyControlCard = ({
               <div className="text-center">
                 <h3 className="font-playfair text-xl font-semibold mb-1">Begin Your Sacred Journey</h3>
                 <p className="text-sm text-muted-foreground">
-                  One tap to start GPS tracking & activate the Journey Guide
+                  {girivalamMode === 'group'
+                    ? 'Create or join a group, then start GPS tracking together'
+                    : 'One tap to start GPS tracking & activate the Journey Guide'}
                 </p>
               </div>
               <Button

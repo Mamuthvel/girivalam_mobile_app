@@ -8,6 +8,7 @@ export const landmarkTypeEnum = z.enum([
   'toilet',
   'medical',
   'parking',
+  'rooms',
 ])
 
 export const directionEnum = z.enum([

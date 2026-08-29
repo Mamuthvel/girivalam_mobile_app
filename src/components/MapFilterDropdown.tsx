@@ -17,6 +17,7 @@ import {
     MapPin,
     Bath,
     Mountain,
+    Bed,
     Check,
 } from 'lucide-react';
 import type { Landmark } from '@/data/landmarks';
@@ -44,6 +45,7 @@ const filterOptions: FilterOption[] = [
     { id: 'toilet',  labelKey: 'filter.toilets', icon: <Bath     className="h-4 w-4" />, dot: '#6B7280' },
     { id: 'medical', labelKey: 'filter.medical', icon: <Heart    className="h-4 w-4" />, dot: '#EF4444' },
     { id: 'parking', labelKey: 'filter.parking', icon: <Car      className="h-4 w-4" />, dot: '#10B981' },
+    { id: 'rooms',   labelKey: 'filter.rooms',   icon: <Bed      className="h-4 w-4" />, dot: '#14B8A6' },
 ];
 
 const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
@@ -89,7 +91,7 @@ const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
                         <Filter className="h-4 w-4 text-gray-500" />
                         <span className="font-medium text-sm">{t('filter.title')}</span>
                         {selectedFilters.length > 0 && selectedFilters.length < filterOptions.length && (
-                            <span className="bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold leading-none">
+                            <span className="bg-slate-700 text-white text-xs px-1.5 py-0.5 rounded-full font-bold leading-none">
                                 {selectedFilters.length}
                             </span>
                         )}
@@ -118,7 +120,7 @@ const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
                                 <button
                                     onClick={handleShowAll}
                                     disabled={allSelected}
-                                    className="text-xs text-orange-600 font-medium disabled:text-gray-300 hover:text-orange-700 transition-colors flex items-center gap-1"
+                                    className="text-xs text-slate-600 font-medium disabled:text-gray-300 hover:text-slate-800 transition-colors flex items-center gap-1"
                                 >
                                     <CheckCheck className="h-3.5 w-3.5" />
                                     {t('filter.all')}
@@ -141,7 +143,7 @@ const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
                                             onClick={() => handleTogglePending(filter.id)}
                                             className={`relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all active:scale-[0.97] touch-manipulation border ${
                                                 isSelected
-                                                    ? 'bg-orange-50 border-orange-300 text-orange-800'
+                                                    ? 'bg-slate-100 border-slate-400 text-slate-800'
                                                     : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'
                                             }`}
                                         >
@@ -154,7 +156,7 @@ const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
                                                 {t(filter.labelKey)}
                                             </span>
                                             {isSelected && (
-                                                <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center">
+                                                <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center">
                                                     <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                                                 </span>
                                             )}
@@ -200,7 +202,7 @@ const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
                             variant="default"
                             size="sm"
                             onClick={handleApply}
-                            className="h-8 px-5 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white shadow-none rounded-lg"
+                            className="h-8 px-5 text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white shadow-none rounded-lg"
                         >
                             <Check className="h-3 w-3 mr-1" />
                             {t('filter.apply') || 'Apply'}
@@ -224,9 +226,10 @@ const MapFilterDropdown: React.FC<MapFilterDropdownProps> = ({
                             }}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                                 isSelected
-                                    ? 'bg-orange-500 border-orange-500 text-white shadow-sm'
+                                    ? 'text-white border-transparent shadow-sm'
                                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                             }`}
+                            style={isSelected ? { backgroundColor: filter.dot, borderColor: filter.dot } : undefined}
                         >
                             <span
                                 className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isSelected ? 'bg-white/70' : ''}`}

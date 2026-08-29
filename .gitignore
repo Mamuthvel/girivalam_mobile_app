@@ -50,3 +50,12 @@ DerivedData
 !debug.keystore
 keystore.properties
 android/keystore.properties
+
+# Signed build artifacts (AAB/APK) — never commit; upload to Play Console instead
+/release/
+*.aab
+*.apk
+!debug.apk
+
+# Claude Code local session/tooling state
+.claude/

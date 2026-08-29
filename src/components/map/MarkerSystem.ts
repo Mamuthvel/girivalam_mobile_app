@@ -10,6 +10,7 @@ export const MARKER_TOKENS = {
   toilet:  { bg: "#6B7280", glow: "#6B728080", emoji: "🚻", label: "Restroom" },
   medical: { bg: "#EF4444", glow: "#EF444480", emoji: "🏥", label: "Medical"  },
   parking: { bg: "#10B981", glow: "#10B98180", emoji: "🅿️", label: "Parking" },
+  rooms:   { bg: "#14B8A6", glow: "#14B8A680", emoji: "🛏️", label: "Rooms"   },
 } as const;
 
 export type MarkerType = keyof typeof MARKER_TOKENS;
@@ -17,13 +18,14 @@ export type MarkerType = keyof typeof MARKER_TOKENS;
 // ─── SVG Icon Strings ────────────────────────────────────────────────────────
 
 const SVG_ICONS: Record<MarkerType, string> = {
-  temple: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M4 20V10l8-7 8 7v10M10 20v-5h4v5"/></svg>`,
+  temple: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2.5"/><path d="M6 21V9l6-4.5L18 9v12"/><path d="M6 12.5h12"/><path d="M6 16.5h12"/><path d="M10 21v-3.5h4V21"/></svg>`,
   water:  `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z"/></svg>`,
   food:   `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`,
   rest:   `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
   toilet: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M12 7v6m0 0-3 5m3-5 3 5"/></svg>`,
   medical:`<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
   parking:`<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>`,
+  rooms:  `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>`,
 };
 
 // ─── Premium Landmark Marker ─────────────────────────────────────────────────
@@ -121,23 +123,28 @@ export interface PopupData {
   imageUrl?: string;
 }
 
+// Small inline glyphs for the meta chips (currentColor so they inherit chip text).
+const GP_GLYPHS = {
+  clock:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  pin:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  directions: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
+  share:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+} as const;
+
 export const buildGlassPopup = (data: PopupData): string => {
   const token = MARKER_TOKENS[data.type];
-  const facilitiesHtml = data.facilities?.length
-    ? `<div class="gp-chips">${data.facilities.map(f => `<span class="gp-chip">${f}</span>`).join("")}</div>`
-    : "";
+  // Website theme colour (sage-green brand) — keeps every popup on-brand.
+  const brand = "hsl(var(--primary))";
 
-  const timingsHtml = data.timings
-    ? `<div class="gp-row"><span class="gp-icon">🕐</span><span>${data.timings}</span></div>`
-    : "";
-
-  const directionHtml = data.direction
-    ? `<div class="gp-row"><span class="gp-icon">🧭</span><span>${data.direction} Direction</span></div>`
-    : "";
-
-  const distanceHtml = data.distance
-    ? `<div class="gp-distance">${data.distance} away</div>`
-    : "";
+  // Compact, icon-led meta chips (no wordy labels).
+  const chips: string[] = [];
+  if (data.timings)
+    chips.push(`<span class="gp-chip gp-chip-wide" title="Timings">${GP_GLYPHS.clock}${data.timings}</span>`);
+  if (data.distance)
+    chips.push(`<span class="gp-chip" title="Distance">${GP_GLYPHS.pin}${data.distance}</span>`);
+  if (data.facilities?.length)
+    for (const f of data.facilities) chips.push(`<span class="gp-chip">${f}</span>`);
+  const metaHtml = chips.length ? `<div class="gp-meta">${chips.join("")}</div>` : "";
 
   const imageHtml = data.imageUrl
     ? `<div class="gp-photo"><img src="${data.imageUrl}" alt="${data.name}" /></div>`
@@ -159,28 +166,22 @@ export const buildGlassPopup = (data: PopupData): string => {
   return `
     <div class="glass-popup" data-type="${data.type}">
       ${imageHtml}
-      <div class="gp-header" style="--gp-color:${token.bg};">
-        <div class="gp-badge" style="background:${token.bg};">
+      <div class="gp-header" style="--gp-color:${brand};">
+        <div class="gp-badge" style="background:${brand};">
           <div style="width:18px;height:18px;">${SVG_ICONS[data.type]}</div>
         </div>
         <div class="gp-title-block">
           <div class="gp-title">${data.name}</div>
-          <div class="gp-category" style="color:${token.bg};">${token.label}</div>
+          <div class="gp-category" style="color:${brand};">${token.label}</div>
         </div>
-        ${distanceHtml}
       </div>
-      ${data.description ? `<div class="gp-desc">${data.description}</div>` : ""}
-      ${directionHtml}
-      ${timingsHtml}
-      ${facilitiesHtml}
+      ${metaHtml}
       <div class="gp-actions">
-        <button class="gp-btn gp-btn-primary" style="background:${token.bg};" onclick="${directionsOnclick}">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-          Directions
+        <button class="gp-fab gp-fab-primary" title="Get directions" aria-label="Get directions" style="background:${brand};" onclick="${directionsOnclick}">
+          ${GP_GLYPHS.directions}
         </button>
-        <button class="gp-btn gp-btn-ghost" onclick="${shareOnclick}">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-          Share
+        <button class="gp-fab gp-fab-ghost" title="Share" aria-label="Share" onclick="${shareOnclick}">
+          ${GP_GLYPHS.share}
         </button>
       </div>
     </div>`;
@@ -253,26 +254,33 @@ export const createMyLocationMarker = (isTracking: boolean): L.DivIcon =>
 
 // ─── Map Tile Themes ─────────────────────────────────────────────────────────
 
+// All tile sources below are key-free (OpenStreetMap & Esri public services), so
+// the basemap renders without an API key. `maxNativeZoom` lets Leaflet upscale
+// tiles for providers whose imagery stops before zoom 19.
 export const MAP_THEMES = {
   standard: {
     label: "Standard",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution: "© OpenStreetMap contributors, © CARTO",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap contributors",
+    maxNativeZoom: 19,
   },
   dark: {
     label: "Dark",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: "© CARTO",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "© Esri",
+    maxNativeZoom: 16,
   },
   spiritual: {
-    label: "Spiritual",
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "© CARTO",
+    label: "Light",
+    url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap contributors, Humanitarian OSM Team",
+    maxNativeZoom: 19,
   },
   satellite: {
     label: "Satellite",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "© Esri",
+    maxNativeZoom: 19,
   },
 } as const;
 

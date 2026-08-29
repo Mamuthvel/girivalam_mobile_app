@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Users, User, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import SiteHeader from "@/components/SiteHeader";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +36,8 @@ const JoinGroup = () => {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Private-group password is entered here (or carried over from a legacy ?pwd= link).
+  const [passwordInput, setPasswordInput] = useState(password || '');
 
   // Fetch group details
   useEffect(() => {
@@ -99,21 +102,32 @@ const JoinGroup = () => {
   }, [groupId, groupCode]);
 
   // Handle join button click
-  const handleJoin = async () => {
+  const handleJoin = async (pwdOverride?: string) => {
+    const effectivePassword = (pwdOverride || passwordInput || password || '').trim();
+
+    // Private group: require the password up front (kept out of the URL for privacy).
+    if (group?.group_type === 'private' && !effectivePassword) {
+      toast({
+        title: 'Password Required',
+        description: 'Enter the password shared by the group creator to continue.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!user) {
-      // Store pending join info and redirect to auth
+      // Remember the invite (incl. entered password) and come back after sign-in.
       const joinParams = new URLSearchParams();
       if (groupId) joinParams.set('groupId', groupId);
       if (groupCode) joinParams.set('code', groupCode);
-      if (password) joinParams.set('pwd', password);
 
       sessionStorage.setItem('pendingGroupJoin', JSON.stringify({
         groupId: groupId || null,
         code: groupCode || null,
-        password: password || null,
+        password: effectivePassword || null,
       }));
 
-      navigate(`/auth?redirect=/join?${joinParams.toString()}`);
+      navigate(`/auth?redirect=${encodeURIComponent(`/join?${joinParams.toString()}`)}`);
       return;
     }
 
@@ -140,9 +154,9 @@ const JoinGroup = () => {
       }
 
       // Handle private group password verification
-      if (group.group_type === 'private' && password) {
+      if (group.group_type === 'private') {
         const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-group-password', {
-          body: { groupId: group.id, password }
+          body: { groupId: group.id, password: effectivePassword }
         });
 
         if (verifyError || !verifyData?.valid) {
@@ -154,14 +168,6 @@ const JoinGroup = () => {
           setJoining(false);
           return;
         }
-      } else if (group.group_type === 'private' && !password) {
-        toast({
-          title: 'Password Required',
-          description: 'This is a private group. Please use a valid invite link.',
-          variant: 'destructive',
-        });
-        setJoining(false);
-        return;
       }
 
       // Join the group
@@ -212,8 +218,10 @@ const JoinGroup = () => {
     const pendingJoin = sessionStorage.getItem('pendingGroupJoin');
     if (pendingJoin && group) {
       sessionStorage.removeItem('pendingGroupJoin');
-      // Auto-join after login
-      handleJoin();
+      let storedPwd: string | undefined;
+      try { storedPwd = JSON.parse(pendingJoin)?.password || undefined; } catch { /* ignore */ }
+      // Auto-join after login (carry the password entered before sign-in)
+      handleJoin(storedPwd);
     }
   }, [user, group]);
 
@@ -307,9 +315,30 @@ const JoinGroup = () => {
             )}
           </div>
 
+          {/* Private group password */}
+          {group.group_type === 'private' && (
+            <div className="mb-4 text-left">
+              <label htmlFor="group-pwd" className="text-sm font-medium mb-1.5 block">
+                🔒 Group password
+              </label>
+              <Input
+                id="group-pwd"
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter the password from the group creator"
+                onKeyDown={(e) => { if (e.key === 'Enter' && !joining) handleJoin(); }}
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                This is a private group — ask the creator for the password.
+              </p>
+            </div>
+          )}
+
           {/* Join Button */}
           <Button
-            onClick={handleJoin}
+            onClick={() => handleJoin()}
             disabled={joining}
             className="w-full h-14 text-lg bg-primary hover:bg-primary/90 shadow-lg"
             size="lg"

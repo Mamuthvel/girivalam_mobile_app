@@ -43,6 +43,8 @@ const Guides = lazy(() => import("./pages/Guides"));
 const GirivalamDistanceRoute = lazy(() => import("./pages/GirivalamDistanceRoute"));
 const AshtaLingamTemples = lazy(() => import("./pages/AshtaLingamTemples"));
 const TiruvannamalaiTouristSpots = lazy(() => import("./pages/TiruvannamalaiTouristSpots"));
+const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
+const ChildSafety = lazy(() => import("./pages/ChildSafety"));
 
 // Preload critical routes
 if (typeof window !== 'undefined') {
@@ -71,6 +73,8 @@ const App = () => (
         <Route path="/auth" element={<Auth />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
+        <Route path="/child-safety" element={<ChildSafety />} />
         <Route path="/emergency-contacts" element={<EmergencyContacts />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/girivalam-map-preview" element={<MapPreview />} />
@@ -149,14 +153,8 @@ const App = () => (
           }
         />
         <Route path="/blog/pournami-dates-2025-2026" element={<PournamiDates />} />
-        <Route
-          path="/join"
-          element={
-            <ProtectedRoute>
-              <JoinGroup />
-            </ProtectedRoute>
-          }
-        />
+        {/* Public: invite recipients (often logged-out) must see the group invite first */}
+        <Route path="/join" element={<JoinGroup />} />
         <Route
           path="/personal"
           element={

@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Navigation } from "@/components/Navigation";
+import SiteFooter from "@/components/SiteFooter";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -294,6 +295,7 @@ const SpiritualGuide = () => {
           icon={<BookOpen className="h-8 w-8 text-primary" />}
           backgroundContent={<SpiritualGuideTeaser />}
         />
+        <SiteFooter />
       </div>
     );
   }
@@ -698,6 +700,7 @@ const SpiritualGuide = () => {
           </Tabs>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 };

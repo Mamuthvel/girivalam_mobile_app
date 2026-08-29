@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Navigation } from "@/components/Navigation";
+import SiteFooter from "@/components/SiteFooter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -278,13 +279,14 @@ const SpiritualResources = () => {
         </Card>
 
         {/* Disclaimer */}
-        <footer className="text-center py-6 border-t border-border/50">
+        <div className="text-center py-6 border-t border-border/50">
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            This content is intended for general spiritual awareness and does not replace 
+            This content is intended for general spiritual awareness and does not replace
             medical, legal, or professional advice.
           </p>
-        </footer>
+        </div>
       </main>
+      <SiteFooter />
     </div>
   );
 };

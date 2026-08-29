@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Plus, MapIcon, ListIcon } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -213,6 +214,7 @@ export default function LiveAnnadhanam() {
       </div>
 
       <SubmitListingDialog open={submitOpen} onOpenChange={setSubmitOpen} />
+      <SiteFooter />
     </div>
   );
 }

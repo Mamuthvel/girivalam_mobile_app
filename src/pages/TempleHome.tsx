@@ -15,6 +15,7 @@ import {
   Shield
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -311,6 +312,7 @@ const TempleHome = () => {
           </motion.div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 };

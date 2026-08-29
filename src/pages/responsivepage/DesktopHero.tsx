@@ -3,8 +3,10 @@ import { BookOpen, Heart, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import PournamiExpandableCard from "@/components/PournamiExpandableCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DesktopHero = () => {
+    const { t } = useLanguage();
     return (
         <div className="relative z-10 flex-1 flex items-center justify-center px-4 pt-20">
             <div className="max-w-7xl mx-auto w-full">
@@ -28,8 +30,8 @@ const DesktopHero = () => {
                                         <Play className="h-6 w-6 ml-1" />
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-semibold text-lg text-foreground/90">Start Girivalam</h3>
-                                        <p className="text-xs text-muted-foreground">Solo or Group journey</p>
+                                        <h3 className="font-semibold text-lg text-foreground/90">{t('home.startGirivalam')}</h3>
+                                        <p className="text-xs text-muted-foreground">{t('home.startGirivalamDesc')}</p>
                                     </div>
                                 </div>
                             </Link>
@@ -42,8 +44,8 @@ const DesktopHero = () => {
                                         <Heart className="h-6 w-6" />
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-semibold text-lg text-foreground/90">Donate Now</h3>
-                                        <p className="text-xs text-muted-foreground">Support the cause</p>
+                                        <h3 className="font-semibold text-lg text-foreground/90">{t('home.donateNow')}</h3>
+                                        <p className="text-xs text-muted-foreground">{t('home.donateNowDesc')}</p>
                                     </div>
                                 </div>
                             </Link>
@@ -55,8 +57,8 @@ const DesktopHero = () => {
                                     <BookOpen className="h-6 w-6" />
                                 </div>
                                 <div className="text-left">
-                                    <h3 className="font-semibold text-lg text-foreground/90">Spiritual Guide</h3>
-                                    <p className="text-xs text-muted-foreground">Read the history</p>
+                                    <h3 className="font-semibold text-lg text-foreground/90">{t('home.spiritualGuide')}</h3>
+                                    <p className="text-xs text-muted-foreground">{t('home.spiritualGuideDesc')}</p>
                                 </div>
                             </div>
                         </Link>
@@ -80,7 +82,7 @@ const DesktopHero = () => {
 
                             <h3 className="font-playfair text-xl font-semibold mb-6 flex items-center justify-center gap-2 text-foreground/80">
                                 <span className="w-8 h-[1px] bg-primary/40"></span>
-                                Today's Mantra
+                                {t('home.todaysMantra')}
                                 <span className="w-8 h-[1px] bg-primary/40"></span>
                             </h3>
 
@@ -89,7 +91,7 @@ const DesktopHero = () => {
                             </p>
 
                             <Badge variant="outline" className="w-fit mx-auto border-primary/20 text-muted-foreground font-normal">
-                                Sacred Chant
+                                {t('home.sacredChant')}
                             </Badge>
                         </div>
                     </div>

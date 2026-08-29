@@ -40,4 +40,5 @@ export const ALL_LANDMARK_TYPES: Landmark['type'][] = [
   'toilet',
   'medical',
   'parking',
+  'rooms',
 ];

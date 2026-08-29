@@ -124,6 +124,7 @@ const LandmarksTab = ({
             <SelectItem value="toilet">Toilet</SelectItem>
             <SelectItem value="medical">Medical</SelectItem>
             <SelectItem value="parking">Parking</SelectItem>
+            <SelectItem value="rooms">Rooms</SelectItem>
           </SelectContent>
         </Select>
 

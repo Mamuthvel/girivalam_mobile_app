@@ -4,18 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Shield } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Seo from '@/components/Seo';
+import SiteHeader from '@/components/SiteHeader';
+import SiteFooter from '@/components/SiteFooter';
 
 const Privacy = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background p-4">
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background flex flex-col">
       <Seo
         title="Privacy Policy | MyGirivalam.in"
         description="Privacy Policy for MyGirivalam.in — the Tiruvannamalai Girivalam guide with live GPS tracking, temple timings, and Pournami calendar."
         canonical="/privacy"
       />
-      <div className="max-w-4xl mx-auto">
+      <SiteHeader />
+      <div className="w-full max-w-4xl mx-auto flex-1 p-4 pt-24">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link to="/auth">
@@ -173,6 +176,7 @@ const Privacy = () => {
           </CardContent>
         </Card>
       </div>
+      <SiteFooter />
     </div>
   );
 };

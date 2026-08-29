@@ -10,6 +10,7 @@ const LANDMARK_TYPES = [
     'toilet',
     'medical',
     'parking',
+    'rooms',
 ] as const
 
 const DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { ClickSound } from "@/components/ClickSound";
 import {
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImage from "@/assets/updated_hero_image.webp?format=webp";
+import heroImage from "@/assets/updated_hero_image.webp?w=1280&q=70&format=webp";
 import { Link } from "react-router-dom";
 const DesktopHero = lazy(() => import("./responsivepage/DesktopHero"));
 const MobileHero = lazy(() => import("./responsivepage/MobileHero"));
@@ -52,9 +53,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Tiruvannamalai Girivalam Guide — Live Map & 2026 Dates</title>
-        <meta name="description" content="Tiruvannamalai Girivalam guide: 14km route map, Ashta Lingam temples, live GPS tracking, and 2026 Pournami dates — everything for your sacred walk." />
+        <title>Girivalam Map — Live GPS Route, Ashta Lingam & 2026 Dates | Tiruvannamalai</title>
+        <meta name="description" content="Free Girivalam map with live GPS location tracking, the 14 km Arunachala route, all 8 Ashta Lingam temples, group walk sharing, and 2026 Pournami dates for Tiruvannamalai." />
         <link rel="canonical" href="https://mygirivalam.in/" />
+        {/* Preload the LCP hero image for faster mobile load */}
+        <link rel="preload" as="image" href={heroImage} />
         <meta property="og:url" content="https://mygirivalam.in/" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
@@ -143,6 +146,8 @@ const Index = () => {
           <img
             src={heroImage}
             alt="Sacred Arunachala Hill at golden hour"
+            width={1280}
+            height={800}
             className="w-full h-full object-cover  contrast-125 saturate-150"
             loading="eager"
             fetchPriority="high"
@@ -428,13 +433,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card/30 border-t border-border/30 py-4 cv-auto">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            &copy; 2026 MyGirivalam.in &mdash; Made with devotion for Arunachala devotees
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };

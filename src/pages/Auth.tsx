@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,13 +30,25 @@ const Auth = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Where to send the user after a successful sign-in — honour ?redirect= or the
+  // location the ProtectedRoute came from, so invite links & deep links survive login.
+  const getRedirectTarget = useCallback(() => {
+    const r = searchParams.get('redirect');
+    if (r && r.startsWith('/')) return r; // internal only (no open redirect)
+    const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+    if (from?.pathname) return `${from.pathname}${from.search || ''}`;
+    return '/';
+  }, [searchParams, location.state]);
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate(getRedirectTarget(), { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, getRedirectTarget]);
 
   // Resend timer countdown
   useEffect(() => {
@@ -134,7 +146,7 @@ const Auth = () => {
         title: t('auth.welcomeBack'),
         description: t('auth.loginSuccess'),
       });
-      navigate('/');
+      navigate(getRedirectTarget(), { replace: true });
     }
     setIsLoading(false);
   };

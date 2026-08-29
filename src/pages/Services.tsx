@@ -1,6 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -134,6 +135,7 @@ const Services = () => {
             icon={<Bed className="h-8 w-8 text-primary" />}
             backgroundContent={<ServicesTeaser />}
           />
+          <SiteFooter />
         </div>
       </>
     );
@@ -299,6 +301,7 @@ const Services = () => {
           validationErrors={validationErrors}
         />
       </div>
+      <SiteFooter />
     </>
   );
 };

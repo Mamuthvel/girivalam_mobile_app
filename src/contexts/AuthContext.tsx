@@ -2,6 +2,39 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from "@/lib/logger";
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { App as CapApp } from '@capacitor/app';
+
+const isNative = Capacitor.isNativePlatform();
+// Deep link the app registers (custom URL scheme = the app id). Supabase must
+// list this exact value under Authentication -> URL Configuration -> Redirect URLs.
+const NATIVE_OAUTH_REDIRECT = 'com.girivalam.app://auth/callback';
+
+// Complete a native OAuth login from the deep-link URL handed back to the app.
+const completeNativeOAuth = async (url: string) => {
+  try {
+    const code = url.split('?')[1]?.split('#')[0]
+      ? new URLSearchParams(url.split('?')[1].split('#')[0]).get('code')
+      : null;
+    if (code) {
+      await supabase.auth.exchangeCodeForSession(code);
+      return;
+    }
+    // Fallback: implicit-style tokens in the URL hash
+    const hash = url.split('#')[1];
+    if (hash) {
+      const hp = new URLSearchParams(hash);
+      const access_token = hp.get('access_token');
+      const refresh_token = hp.get('refresh_token');
+      if (access_token && refresh_token) {
+        await supabase.auth.setSession({ access_token, refresh_token });
+      }
+    }
+  } catch (e) {
+    logger.warn('Native OAuth callback failed:', e);
+  }
+};
 
 type OtpChannel = 'sms' | 'email';
 
@@ -65,9 +98,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
+    // Native: catch the OAuth redirect deep link and finish the login in-app
+    let urlListener: { remove: () => void } | undefined;
+    if (isNative) {
+      CapApp.addListener('appUrlOpen', async ({ url }) => {
+        if (url && url.includes('auth/callback')) {
+          await completeNativeOAuth(url);
+          try { await Browser.close(); } catch { /* no-op */ }
+        }
+      }).then((handle) => { urlListener = handle; });
+    }
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      urlListener?.remove();
     };
   }, []);
 
@@ -115,8 +160,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  // Google Sign-In (kept for future use)
+  // Google Sign-In
   const signInWithGoogle = async () => {
+    if (isNative) {
+      // Get the provider URL but don't let the WebView navigate away; open it in
+      // the system browser and let the deep-link handler bring the session back.
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: NATIVE_OAUTH_REDIRECT,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        logger.warn('Google sign-in failed:', error);
+        return;
+      }
+      if (data?.url) {
+        await Browser.open({ url: data.url });
+      }
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

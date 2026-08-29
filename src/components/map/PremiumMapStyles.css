@@ -197,55 +197,57 @@
 
 .gp-icon { font-size: 14px; flex-shrink: 0; }
 
-.gp-chips {
+/* Compact, icon-led meta chips */
+.gp-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  padding: 6px 16px 10px;
+  gap: 6px;
+  padding: 10px 16px 4px;
 }
 
 .gp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
   background: rgba(0,0,0,.06);
   border-radius: var(--map-radius-pill);
-  padding: 3px 9px;
+  padding: 4px 9px;
+  line-height: 1.3;
 }
 
+.gp-chip svg { width: 12px; height: 12px; opacity: .65; flex-shrink: 0; }
+.gp-chip-wide { max-width: 100%; }
+
+/* Icon-only action buttons */
 .gp-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   padding: 10px 16px 14px;
-  border-top: 1px solid rgba(0,0,0,.06);
 }
 
-.gp-btn {
+.gp-fab {
   flex: 1;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  font-family: var(--map-font);
-  font-size: 12px;
-  font-weight: 600;
   border: none;
   border-radius: var(--map-radius-md);
-  padding: 8px 12px;
   cursor: pointer;
-  transition: opacity .15s, transform .12s;
+  transition: opacity .15s, transform .12s, background .15s;
 }
 
-.gp-btn:active { transform: scale(.96); }
+.gp-fab svg { width: 18px; height: 18px; }
+.gp-fab:active { transform: scale(.95); }
 
-.gp-btn-primary { color: #fff; }
-.gp-btn-primary:hover { opacity: .88; }
+.gp-fab-primary { color: #fff; }
+.gp-fab-primary:hover { opacity: .9; }
 
-.gp-btn-ghost {
-  color: #374151;
-  background: rgba(0,0,0,.06);
-}
-.gp-btn-ghost:hover { background: rgba(0,0,0,.1); }
+.gp-fab-ghost { color: #374151; background: rgba(0,0,0,.07); }
+.gp-fab-ghost:hover { background: rgba(0,0,0,.12); }
 
 /* ═══════════════════════════════════════════════════════════════════
    SOCIAL USER MARKERS  (sum-*)

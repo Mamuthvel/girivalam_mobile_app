@@ -29,12 +29,10 @@ const InviteLinkButton = ({
   const [copied, setCopied] = useState(false);
 
   const generateInviteLink = (): string => {
+    // Never put the group password in the URL — it would leak via history,
+    // referrers and link previews. Private-group members enter it on the join page.
     const baseUrl = window.location.origin;
-    let link = `${baseUrl}/join?groupId=${groupId}&code=${groupCode}`;
-    if (groupType === 'private' && password) {
-      link += `&pwd=${encodeURIComponent(password)}`;
-    }
-    return link;
+    return `${baseUrl}/join?groupId=${groupId}&code=${groupCode}`;
   };
 
   const handleCopyLink = async () => {

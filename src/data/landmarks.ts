@@ -5,7 +5,7 @@ export interface Landmark {
   lat: number;
   lng: number;
   direction?: "E" | "SE" | "S" | "SW" | "W" | "NW" | "N" | "NE";
-  type: "temple" | "water" | "food" | "rest" | "toilet" | "medical" | "parking";
+  type: "temple" | "water" | "food" | "rest" | "toilet" | "medical" | "parking" | "rooms";
   description?: string;
   timings?: string;
   facilities?: string[];

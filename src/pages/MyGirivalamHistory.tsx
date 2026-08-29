@@ -1,17 +1,63 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import BadgeCelebration, { type CelebBadge } from "@/components/BadgeCelebration";
 import {
   ArrowLeft, Activity, MessageSquare, TrendingUp, Footprints, MapPin,
   Clock, Users, User, Calendar, Loader2, AlertCircle, CheckCircle2,
-  Timer, Star,
+  Timer, Star, Award,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import CommunityFeed from "@/components/CommunityFeed";
-import { useJourneyStats, type RecentJourney } from "@/hooks/useJourneyStats";
+import { useJourneyStats, type RecentJourney, type JourneyStats } from "@/hooks/useJourneyStats";
+
+// ─── Achievement badges ──────────────────────────────────────────────────────
+
+interface BadgeDef {
+  emoji: string;
+  title: string;
+  desc: string;
+  goal: number;
+  value: (s: JourneyStats) => number;
+}
+
+const BADGES: BadgeDef[] = [
+  { emoji: '🏔️', title: 'First Girivalam', desc: 'Complete your first round', goal: 1, value: s => s.completedGirivalams },
+  { emoji: '🙏', title: 'Devotee', desc: 'Complete 3 Girivalams', goal: 3, value: s => s.completedGirivalams },
+  { emoji: '🕉️', title: 'Pilgrim', desc: 'Complete 10 Girivalams', goal: 10, value: s => s.completedGirivalams },
+  { emoji: '⭐', title: 'Sacred 25', desc: 'Complete 25 Girivalams', goal: 25, value: s => s.completedGirivalams },
+  { emoji: '👥', title: 'Group Walker', desc: 'Walk with a group', goal: 1, value: s => s.groupCount },
+  { emoji: '🥾', title: '100 KM Club', desc: 'Walk 100 km in total', goal: 100, value: s => Math.floor(s.totalDistance) },
+  { emoji: '🔥', title: 'On a Streak', desc: '3 months in a row', goal: 3, value: s => s.currentStreak },
+  { emoji: '🌕', title: 'Faithful Soul', desc: '6-month streak', goal: 6, value: s => s.currentStreak },
+];
+
+const BadgeCell = ({ badge, stats }: { badge: BadgeDef; stats: JourneyStats }) => {
+  const val = badge.value(stats);
+  const earned = val >= badge.goal;
+  const pct = Math.min(100, Math.round((val / badge.goal) * 100));
+  return (
+    <div className={`text-center p-3 rounded-xl border ${earned ? 'bg-primary/5 border-primary/30' : 'bg-muted/20 border-border'}`}>
+      <div className={`text-3xl mb-1 ${earned ? '' : 'grayscale opacity-40'}`}>{badge.emoji}</div>
+      <p className="text-xs font-semibold leading-tight">{badge.title}</p>
+      <p className="text-[10px] text-muted-foreground leading-tight mb-1.5">{badge.desc}</p>
+      {earned ? (
+        <span className="text-[10px] font-medium text-primary">✓ Earned</span>
+      ) : (
+        <>
+          <div className="w-full bg-muted rounded-full h-1">
+            <div className="bg-primary/50 h-1 rounded-full" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="text-[10px] text-muted-foreground">{val}/{badge.goal}</span>
+        </>
+      )}
+    </div>
+  );
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -62,10 +108,44 @@ const JourneyRow = ({ j }: { j: RecentJourney }) => (
 const MyGirivalamHistory = () => {
   const [activeTab, setActiveTab] = useState("feed");
   const stats = useJourneyStats();
+  const { user } = useAuth();
+  const [celebrate, setCelebrate] = useState<CelebBadge[]>([]);
+
+  // Detect newly-unlocked badges since the user last viewed this page and celebrate them.
+  useEffect(() => {
+    if (!user || stats.isLoading || stats.error) return;
+    const key = `girivalam_badges_seen_${user.id}`;
+    const earned = BADGES.filter(b => b.value(stats) >= b.goal);
+    const earnedTitles = earned.map(b => b.title);
+
+    let seen: string[] | null = null;
+    try {
+      const raw = localStorage.getItem(key);
+      seen = raw ? JSON.parse(raw) : null;
+    } catch { seen = null; }
+
+    // First visit: baseline the already-earned badges so we don't celebrate retroactively.
+    if (seen === null) {
+      try { localStorage.setItem(key, JSON.stringify(earnedTitles)); } catch { /* ignore */ }
+      return;
+    }
+
+    const newly = earned.filter(b => !seen!.includes(b.title));
+    if (newly.length > 0) {
+      setCelebrate(newly.map(b => ({ emoji: b.emoji, title: b.title, desc: b.desc })));
+      try { localStorage.setItem(key, JSON.stringify(earnedTitles)); } catch { /* ignore */ }
+    }
+  }, [user, stats]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <SiteHeader />
+
+      <AnimatePresence>
+        {celebrate.length > 0 && (
+          <BadgeCelebration badges={celebrate} onClose={() => setCelebrate([])} />
+        )}
+      </AnimatePresence>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Back Navigation */}
@@ -169,6 +249,37 @@ const MyGirivalamHistory = () => {
                     <p className="text-xs text-muted-foreground">Temples Visited</p>
                   </SpiritualCard>
                 </div>
+
+                {/* Streak */}
+                <SpiritualCard className="p-6 bg-gradient-to-br from-orange-500/10 to-primary/5 border-orange-500/20">
+                  <div className="flex items-center justify-center gap-5">
+                    <div className="text-5xl">🔥</div>
+                    <div className="text-center">
+                      <p className="text-4xl font-bold text-orange-500 leading-none">{stats.currentStreak}</p>
+                      <p className="text-sm font-medium mt-1">month streak</p>
+                    </div>
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground mt-3">
+                    {stats.currentStreak > 0
+                      ? 'Complete a Girivalam every month to keep your streak alive 🙏'
+                      : 'Complete a Girivalam this month to start your streak'}
+                  </p>
+                </SpiritualCard>
+
+                {/* Achievements / Badges */}
+                <SpiritualCard className="p-6">
+                  <h3 className="font-playfair text-lg font-semibold mb-4 text-center flex items-center justify-center gap-2">
+                    <Award className="h-5 w-5 text-primary" /> Achievements
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {BADGES.map(b => (
+                      <BadgeCell key={b.title} badge={b} stats={stats} />
+                    ))}
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground mt-4">
+                    {BADGES.filter(b => b.value(stats) >= b.goal).length} of {BADGES.length} unlocked
+                  </p>
+                </SpiritualCard>
 
                 {/* Solo vs Group Breakdown */}
                 <SpiritualCard className="p-6">

@@ -120,8 +120,9 @@ export const useGirivalamPersistence = () => {
     }));
   }, []);
 
-  // Start a new journey session
-  const startJourney = useCallback((mode: 'solo' | 'group', groupId?: string) => {
+  // Start a new journey session. Accepts an explicit sessionId so the DB row and
+  // the localStorage session stay in sync (needed for reliable resume).
+  const startJourney = useCallback((mode: 'solo' | 'group', groupId?: string, sessionId?: string) => {
     const newState: GirivalamSessionState = {
       ...defaultState,
       isTracking: true,
@@ -130,7 +131,7 @@ export const useGirivalamPersistence = () => {
       startTime: new Date().toISOString(),
       hasStartedGirivalam: true,
       lastUpdated: new Date().toISOString(),
-      sessionId: generateSessionId(),
+      sessionId: sessionId || generateSessionId(),
     };
     setState(newState);
     setHasActiveSession(true);

@@ -266,6 +266,7 @@ const Map: React.FC<MapProps> = ({
     const initialTheme = MAP_THEMES["standard"];
     tileLayerRef.current = L.tileLayer(initialTheme.url, {
       maxZoom: 19,
+      maxNativeZoom: initialTheme.maxNativeZoom,
       attribution: initialTheme.attribution,
     }).addTo(mapInstance.current);
 
@@ -414,6 +415,7 @@ const Map: React.FC<MapProps> = ({
     const theme = MAP_THEMES[mapTheme];
     tileLayerRef.current = L.tileLayer(theme.url, {
       maxZoom: 19,
+      maxNativeZoom: theme.maxNativeZoom,
       attribution: theme.attribution,
     }).addTo(mapInstance.current);
 

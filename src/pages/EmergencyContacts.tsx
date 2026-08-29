@@ -12,6 +12,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -216,6 +217,7 @@ const EmergencyContacts = () => {
           </motion.div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 };

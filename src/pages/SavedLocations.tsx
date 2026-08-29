@@ -39,6 +39,7 @@ interface SavedLocation {
 
 const LOCATION_TYPES = [
   { value: "parking", label: "🅿️ Parking" },
+  { value: "rooms", label: "🛏️ Rooms" },
   { value: "temple", label: "🛕 Temple" },
   { value: "water", label: "💧 Water Point" },
   { value: "food", label: "🍽️ Food" },

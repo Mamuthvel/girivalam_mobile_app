@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import logoUrl from "@/assets/newlogo.svg?format=webp&w=128&q=80";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,6 +133,9 @@ export const Navigation = () => {
             <img src={logoUrl} alt="Arunachala Vibe" className="h-8 w-auto" loading="eager" fetchPriority="high" />
             <span className="sr-only">Arunachala Vibe</span>
           </Link>
+
+          {/* Language switcher */}
+          <LanguageSwitcher />
 
           {/* Share Icon - Telegram-style send/paper-rocket */}
           <button
@@ -260,6 +264,9 @@ export const Navigation = () => {
             <img src={logoUrl} alt="Arunachala Vibe" className="h-7 sm:h-8 w-auto" loading="eager" />
             <span className="sr-only">Arunachala Vibe</span>
           </Link>
+
+          {/* Language switcher */}
+          <LanguageSwitcher />
 
           {/* Share Icon - Telegram-style send/paper-rocket */}
           <button

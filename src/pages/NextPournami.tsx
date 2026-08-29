@@ -14,6 +14,8 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import WeatherWidget from "@/components/WeatherWidget";
 import Seo from "@/components/Seo";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -153,12 +155,13 @@ const NextPournami = () => {
           ],
         }}
       />
+      <SiteHeader />
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
         <div className="absolute inset-0 opacity-20"
           style={{ backgroundImage: "radial-gradient(circle at 30% 40%, hsl(var(--primary)) 0%, transparent 50%)" }} />
-        <div className="relative z-10 px-4 pt-6 pb-8 max-w-3xl mx-auto">
+        <div className="relative z-10 px-4 pt-24 pb-8 max-w-3xl mx-auto">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-4">
             <ArrowLeft className="h-4 w-4" /> Back to Home
           </Link>
@@ -385,6 +388,7 @@ const NextPournami = () => {
           </Link>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 };
