@@ -7,6 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Seo from "@/components/Seo";
 import { ashtalingamTemples } from "@/data/landmarks";
+import { TOTAL_KM, km, lingamLeg } from "@/data/girivalam-stages";
+
+/** Stable anchor id, so "esanya lingam timings" can be deep-linked and indexed. */
+const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+const PAGE_URL = "https://mygirivalam.in/ashta-lingam-temples/";
+
+/** Shared timings — see note in src/data/landmarks.ts. */
+const COMMON_TIMINGS = ashtalingamTemples[0]?.timings ?? "";
 
 const GUARDIAN: Record<string, { deity: string; significance: string }> = {
   "Indra Lingam": {
@@ -74,7 +83,7 @@ const AshtaLingamTemples = () => {
             },
             mainEntityOfPage: {
               "@type": "WebPage",
-              "@id": "https://mygirivalam.in/ashta-lingam-temples",
+              "@id": PAGE_URL,
             },
           },
           {
@@ -82,8 +91,8 @@ const AshtaLingamTemples = () => {
             "@type": "BreadcrumbList",
             itemListElement: [
               { "@type": "ListItem", position: 1, name: "Home", item: "https://mygirivalam.in/" },
-              { "@type": "ListItem", position: 2, name: "Guides", item: "https://mygirivalam.in/guides" },
-              { "@type": "ListItem", position: 3, name: "Ashta Lingam Temples", item: "https://mygirivalam.in/ashta-lingam-temples" },
+              { "@type": "ListItem", position: 2, name: "Guides", item: "https://mygirivalam.in/guides/" },
+              { "@type": "ListItem", position: 3, name: "Ashta Lingam Temples", item: PAGE_URL },
             ],
           },
           {
@@ -94,7 +103,46 @@ const AshtaLingamTemples = () => {
               position: i + 1,
               name: t.name,
               description: t.description,
+              url: `${PAGE_URL}#${slug(t.name)}`,
             })),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "How many Lingams are there in Tiruvannamalai?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: `There are 8 Ashta Lingam temples around Arunachala Hill in Tiruvannamalai, one for each direction: Indra (east), Agni (south-east), Yama (south), Nirruti (south-west), Varuna (west), Vayu (north-west), Kubera (north) and Esanya (north-east). All 8 stand on the 14 km Girivalam path and are visited in that clockwise order.`,
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Which is the first Lingam in Girivalam?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Indra Lingam is the first, about 0.2 km from Arunachaleswarar Temple on the eastern side. Girivalam is walked clockwise from there, and Esanya Lingam in the north-east is the eighth and last before the path returns to the temple.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "What is the distance between Kubera Lingam and Esanya Lingam?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: `Kubera Lingam to Esanya Lingam is about ${km(lingamLeg("Esanya Lingam")!.leg)} km along the Girivalam path. Kubera sits at roughly ${km(lingamLeg("Kubera Lingam")!.cumulative)} km from the start and Esanya at ${km(lingamLeg("Esanya Lingam")!.cumulative)} km.`,
+                },
+              },
+              {
+                "@type": "Question",
+                name: "What are the Ashta Lingam temple timings?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: `The Ashta Lingam shrines are generally open ${COMMON_TIMINGS}. Hours are extended on Pournami and festival days such as Karthigai Deepam, when the shrines stay open through the night for Girivalam. Confirm locally before planning a visit around a specific shrine.`,
+                },
+              },
+            ],
           },
         ]}
       />
@@ -119,6 +167,53 @@ const AshtaLingamTemples = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Answer-first summary. "how many lingam in tiruvannamalai",
+            "all lingam in tiruvannamalai" and "8 lingam in tiruvannamalai" are all
+            question-shaped queries that want the count and the list immediately. */}
+        <section className="mb-12">
+          <SpiritualCard className="p-6 md:p-8 border-primary/30 bg-primary/5">
+            <p className="text-lg leading-relaxed text-foreground">
+              There are <strong>8 Ashta Lingam temples</strong> in Tiruvannamalai, one guarding
+              each direction around Arunachala Hill, all standing on the{" "}
+              <Link to="/girivalam-distance-route" className="text-primary underline underline-offset-4 hover:text-primary/80">
+                14 km Girivalam path
+              </Link>
+              . Walked clockwise from the temple they come in this order:
+            </p>
+            <ol className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+              {ashtalingamTemples.map((temple, i) => {
+                const leg = lingamLeg(temple.name);
+                return (
+                  <li key={temple.id}>
+                    <a
+                      href={`#${slug(temple.name)}`}
+                      className="block rounded-xl bg-background/70 px-3 py-2 text-sm transition-colors hover:bg-background"
+                    >
+                      <span className="font-semibold text-foreground">
+                        {i + 1}. {temple.name}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {temple.direction}
+                        {leg ? ` · ${km(leg.cumulative)} km` : ""}
+                      </span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+            {COMMON_TIMINGS && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                All 8 shrines are generally open <strong>{COMMON_TIMINGS}</strong>, with extended
+                hours on Pournami and Karthigai Deepam nights.
+              </p>
+            )}
+            <p className="mt-2 text-sm text-muted-foreground">
+              Distances are measured along the mapped route, which totals {km(TOTAL_KM)} km; the
+              walk is traditionally described as 14 km.
+            </p>
+          </SpiritualCard>
+        </section>
+
         {/* What are Ashta Lingams */}
         <section className="mb-16">
           <SpiritualCard className="p-8">
@@ -150,7 +245,7 @@ const AshtaLingamTemples = () => {
             {ashtalingamTemples.map((temple, i) => {
               const info = GUARDIAN[temple.name];
               return (
-                <SpiritualCard key={temple.id} className="p-6">
+                <SpiritualCard key={temple.id} id={slug(temple.name)} className="p-6 scroll-mt-24">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Stop {i + 1} of 8</p>
@@ -168,6 +263,16 @@ const AshtaLingamTemples = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                     {info?.significance || temple.description}
                   </p>
+                  {(() => {
+                    const leg = lingamLeg(temple.name);
+                    if (!leg) return null;
+                    return (
+                      <p className="mb-2 text-sm text-foreground/80">
+                        <span className="font-medium">{km(leg.cumulative)} km</span> from the start
+                        {leg.previous ? ` · ${km(leg.leg)} km from ${leg.previous}` : " of the walk"}
+                      </p>
+                    );
+                  })()}
                   {temple.timings && (
                     <p className="text-xs text-muted-foreground">
                       <span className="font-medium">Timings:</span> {temple.timings}

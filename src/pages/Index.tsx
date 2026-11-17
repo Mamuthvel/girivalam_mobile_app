@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import SiteHeader from "@/components/SiteHeader";
+import { WelcomeCard } from "@/components/WelcomeCard";
+import { QuickAssist } from "@/components/QuickAssist";
 import SiteFooter from "@/components/SiteFooter";
 import { SpiritualCard } from "@/components/SpiritualCard";
 import { ClickSound } from "@/components/ClickSound";
@@ -139,6 +141,8 @@ const Index = () => {
         })}</script>
       </Helmet>
       <SiteHeader />
+      {/* Session-once greeting; becomes a local welcome when the pilgrim is in town. */}
+      <WelcomeCard />
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col">
         {/* Hero Background */}
@@ -431,6 +435,8 @@ const Index = () => {
           </Accordion>
         </div>
       </section>
+
+      <QuickAssist />
 
       {/* Footer */}
       <SiteFooter />

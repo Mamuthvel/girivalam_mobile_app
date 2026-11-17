@@ -13,7 +13,8 @@
     "build:mobile": "vite build && cap sync",
     "android": "cap open android",
     "ios": "cap open ios",
-    "sync": "cap sync"
+    "sync": "cap sync",
+    "verify:pournami": "node --experimental-strip-types scripts/verify-pournami.ts"
   },
   "reactSnap": {
     "source": "dist",

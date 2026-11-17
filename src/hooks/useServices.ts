@@ -198,7 +198,7 @@ export function useServices() {
     try {
       const totalAmount = selectedService.price * bookingForm.guests_count;
 
-      const { error } = await supabase
+      const { data: booking, error } = await supabase
         .from("bookings")
         .insert({
           user_id: user.id,
@@ -212,18 +212,23 @@ export function useServices() {
           special_requests: bookingForm.special_requests?.trim() || null,
           status: "pending",
           payment_status: "pending"
-        });
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
 
-      // Send admin notification after successful booking (non-blocking)
+      // The in-app admin notification is written by the trg_notify_admin_on_booking
+      // trigger, so it survives this tab closing. This call only sends the email.
       const notificationPromise = supabase.functions.invoke('notify-admin', {
         body: {
           category: 'booking',
+          skip_in_app: true,
+          dedupe_key: booking.id,
           title: `New Booking: ${selectedService.name}`,
           message: `New booking received from ${bookingForm.customer_name} for ${selectedService.name} on ${format(bookingForm.booking_date, "yyyy-MM-dd")}. Amount: ₹${totalAmount}. Phone: ${bookingForm.country_code || '+91'}${bookingForm.customer_phone.trim()}`,
           metadata: {
-            booking_id: null, // Will be set after booking is created
+            booking_id: booking.id,
             customer_name: bookingForm.customer_name.trim(),
             customer_phone: `${bookingForm.country_code || '+91'}${bookingForm.customer_phone.trim()}`,
             customer_email: bookingForm.customer_email?.trim() || null,

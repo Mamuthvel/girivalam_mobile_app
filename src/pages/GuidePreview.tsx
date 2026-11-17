@@ -10,21 +10,29 @@ import {
   LogIn, Headphones, Heart, Footprints, AlertCircle,
   Sun, Moon, Sparkles, Mountain, BookOpen,
 } from "lucide-react";
-import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+
+/**
+ * This page is the public Girivalam guide: signed-in users are sent to
+ * /girivalam-guide instead, so the preview is what search traffic actually
+ * lands on. It used to point its canonical at /girivalam-guide, i.e. it told
+ * Google it was not the real page — while carrying 10,039 impressions a quarter
+ * against that page's 28. It is now self-canonical.
+ */
+const CANONICAL = "https://mygirivalam.in/girivalam-guide-preview/";
 
 // Static color/code/mantra data — no translation needed
 const ASHTA_LINGAM_KEYS = [
-  { id: 1, nameKey: "linga.indra",   sigKey: "guidePreview.sig.indra",   dirKey: "guidePreview.dirEast",  dirCode: "E",  mantra: "Om Indraya Namaha",    color: "from-amber-500 to-orange-500"  },
-  { id: 2, nameKey: "linga.agni",    sigKey: "guidePreview.sig.agni",    dirKey: "guidePreview.dirSE",    dirCode: "SE", mantra: "Om Agnaye Namaha",     color: "from-red-500 to-rose-500"      },
-  { id: 3, nameKey: "linga.yama",    sigKey: "guidePreview.sig.yama",    dirKey: "guidePreview.dirSouth", dirCode: "S",  mantra: "Om Yamaya Namaha",     color: "from-slate-600 to-gray-700"    },
-  { id: 4, nameKey: "linga.niruthi", sigKey: "guidePreview.sig.nirruti", dirKey: "guidePreview.dirSW",    dirCode: "SW", mantra: "Om Nirrutaye Namaha",  color: "from-purple-600 to-violet-600" },
-  { id: 5, nameKey: "linga.varuna",  sigKey: "guidePreview.sig.varuna",  dirKey: "guidePreview.dirWest",  dirCode: "W",  mantra: "Om Varunaya Namaha",   color: "from-sky-500 to-blue-600"      },
-  { id: 6, nameKey: "linga.vayu",    sigKey: "guidePreview.sig.vayu",    dirKey: "guidePreview.dirNW",    dirCode: "NW", mantra: "Om Vayave Namaha",     color: "from-teal-500 to-cyan-600"     },
-  { id: 7, nameKey: "linga.kubera",  sigKey: "guidePreview.sig.kubera",  dirKey: "guidePreview.dirNorth", dirCode: "N",  mantra: "Om Kuberaya Namaha",   color: "from-yellow-500 to-amber-600"  },
-  { id: 8, nameKey: "linga.esanya",  sigKey: "guidePreview.sig.esanya",  dirKey: "guidePreview.dirNE",    dirCode: "NE", mantra: "Om Esanyaya Namaha",   color: "from-pink-500 to-rose-600"     },
+  { id: 1, nameKey: "linga.indra",   sigKey: "guidePreview.sig.indra",   dirKey: "guidePreview.dirEast",  dirCode: "E",  mantra: "Om Indraya Namaha"  },
+  { id: 2, nameKey: "linga.agni",    sigKey: "guidePreview.sig.agni",    dirKey: "guidePreview.dirSE",    dirCode: "SE", mantra: "Om Agnaye Namaha"      },
+  { id: 3, nameKey: "linga.yama",    sigKey: "guidePreview.sig.yama",    dirKey: "guidePreview.dirSouth", dirCode: "S",  mantra: "Om Yamaya Namaha"    },
+  { id: 4, nameKey: "linga.niruthi", sigKey: "guidePreview.sig.nirruti", dirKey: "guidePreview.dirSW",    dirCode: "SW", mantra: "Om Nirrutaye Namaha" },
+  { id: 5, nameKey: "linga.varuna",  sigKey: "guidePreview.sig.varuna",  dirKey: "guidePreview.dirWest",  dirCode: "W",  mantra: "Om Varunaya Namaha"      },
+  { id: 6, nameKey: "linga.vayu",    sigKey: "guidePreview.sig.vayu",    dirKey: "guidePreview.dirNW",    dirCode: "NW", mantra: "Om Vayave Namaha"     },
+  { id: 7, nameKey: "linga.kubera",  sigKey: "guidePreview.sig.kubera",  dirKey: "guidePreview.dirNorth", dirCode: "N",  mantra: "Om Kuberaya Namaha"  },
+  { id: 8, nameKey: "linga.esanya",  sigKey: "guidePreview.sig.esanya",  dirKey: "guidePreview.dirNE",    dirCode: "NE", mantra: "Om Esanyaya Namaha"     },
 ];
 
 const PREP_KEYS = [
@@ -55,54 +63,53 @@ const FEATURE_KEYS = [
 export default function GuidePreview() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
-  const navigate = useNavigate();
+
+  // JSON-LD, always English for crawlers. Rendered through Helmet rather than
+  // appended to document.head in an effect: the effect sat below the early
+  // returns below, so the hook count changed once auth resolved (React throws
+  // on that render), and react-snap never reliably captured the markup.
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_KEYS.map(f => ({
+      "@type": "Question",
+      name: t(f.qKey),
+      acceptedAnswer: { "@type": "Answer", text: t(f.aKey) },
+    })),
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://mygirivalam.in/" },
+      { "@type": "ListItem", position: 2, name: "Girivalam Guide", item: CANONICAL },
+    ],
+  };
 
   if (authLoading) return null;
-  if (user) {
-    navigate("/girivalam-guide", { replace: true });
-    return null;
-  }
-
-  // JSON-LD schemas (always English for SEO bots)
-  useEffect(() => {
-    const faqSchema = document.createElement("script");
-    faqSchema.type = "application/ld+json";
-    faqSchema.text = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: FAQ_KEYS.map(f => ({
-        "@type": "Question",
-        name: t(f.qKey),
-        acceptedAnswer: { "@type": "Answer", text: t(f.aKey) },
-      })),
-    });
-    const breadcrumb = document.createElement("script");
-    breadcrumb.type = "application/ld+json";
-    breadcrumb.text = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: "https://mygirivalam.in/" },
-        { "@type": "ListItem", position: 2, name: "Spiritual Guide", item: "https://mygirivalam.in/girivalam-guide-preview" },
-      ],
-    });
-    document.head.append(faqSchema, breadcrumb);
-    return () => { [faqSchema, breadcrumb].forEach(s => document.head.removeChild(s)); };
-  }, []);
+  // Declarative, so there is no navigation side effect during render.
+  if (user) return <Navigate to="/girivalam-guide" replace />;
 
   return (
     <>
       <Helmet>
-        <title>Girivalam Spiritual Guide — Ashta Lingam Temples Tiruvannamalai | MyGirivalam</title>
-        <meta name="description" content="Complete guide to the 14 km Girivalam path around Arunachala Hill. Explore all 8 Ashta Lingam temples — mantras, significance, timings, and pilgrimage tips for Tiruvannamalai." />
-        <meta name="keywords" content="Girivalam guide, Ashta Lingam, Arunachala, Tiruvannamalai, Girivalam temples, Girivalam route, Pournami Girivalam, Shiva temples Tiruvannamalai" />
-        <link rel="canonical" href="https://mygirivalam.in/girivalam-guide" />
-        <meta property="og:title" content="Complete Girivalam Spiritual Guide — Ashta Lingam Temples" />
-        <meta property="og:description" content="Explore all 8 Ashta Lingam temples on the sacred 14 km Girivalam path. Mantras, stories, timings, preparation tips." />
+        {/* 55 characters, so it survives mobile truncation — 89% of this page's
+            traffic is mobile. The old title led with "Spiritual Guide" while the
+            impressions arrive on practical how-to and generic Girivalam queries,
+            which is how 10,039 impressions converted at 0.80%. The Ashta Lingam
+            reference intent is served by /ashta-lingam-temples, so this page no
+            longer competes for it. */}
+        <title>Girivalam Guide — How to Walk the 14 km Arunachala Path</title>
+        <meta name="description" content="How to do Girivalam at Tiruvannamalai: where to start, which direction to walk, what to carry, how long the 14 km path takes, and all 8 Ashta Lingam stops." />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="Girivalam Guide — How to Walk the 14 km Arunachala Path" />
+        <meta property="og:description" content="Where to start, which direction, what to carry, and how long the sacred 14 km walk around Arunachala Hill takes." />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://mygirivalam.in/girivalam-guide-preview" />
-        <meta property="og:image" content="https://mygirivalam.in/og-guide.jpg" />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:image" content="https://mygirivalam.in/images/girivalam-og-image.jpg" />
         <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
       </Helmet>
 
       <div className="min-h-screen bg-background pt-20 md:pt-24">
@@ -117,7 +124,7 @@ export default function GuidePreview() {
             </Badge>
             <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-5 leading-tight">
               {t("guidePreview.heroTitle")} —{" "}
-              <span className="text-primary">{t("guidePreview.heroHighlight")}</span>
+              <span className="text-accent">{t("guidePreview.heroHighlight")}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
               {t("guidePreview.heroDesc")}
@@ -156,7 +163,7 @@ export default function GuidePreview() {
               {ASHTA_LINGAM_KEYS.map((lingam) => (
                 <SpiritualCard key={lingam.id} className="p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${lingam.color} flex items-center justify-center text-white font-bold text-sm shadow`}>
+                    <div className="w-10 h-10 rounded-full bg-forest-night text-glow ring-1 ring-glow/30 flex items-center justify-center font-bold text-sm shadow">
                       {lingam.dirCode}
                     </div>
                     <Badge variant="outline" className="text-xs">{t(lingam.dirKey)}</Badge>

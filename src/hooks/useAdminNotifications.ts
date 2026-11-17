@@ -3,9 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger } from "@/lib/logger";
 
+/** Must stay in sync with the admin_notifications category CHECK constraint. */
+export type AdminNotificationCategory =
+  | 'booking'
+  | 'message'
+  | 'service'
+  | 'emergency'
+  | 'annadhanam_reminder';
+
 export interface AdminNotification {
   id: string;
-  category: 'booking' | 'message' | 'service' | 'emergency';
+  category: AdminNotificationCategory;
   title: string;
   message: string;
   metadata: Record<string, any>;
@@ -14,13 +22,16 @@ export interface AdminNotification {
   read_at: string | null;
 }
 
-export interface NotificationCounts {
-  booking: number;
-  message: number;
-  service: number;
-  emergency: number;
-  total: number;
-}
+export type NotificationCounts = Record<AdminNotificationCategory, number> & { total: number };
+
+const emptyCounts = (): NotificationCounts => ({
+  booking: 0,
+  message: 0,
+  service: 0,
+  emergency: 0,
+  annadhanam_reminder: 0,
+  total: 0,
+});
 
 export interface AdminNotificationSettings {
   email_alerts_enabled: boolean;
@@ -43,13 +54,7 @@ const defaultSettings: AdminNotificationSettings = {
 export function useAdminNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
-  const [counts, setCounts] = useState<NotificationCounts>({
-    booking: 0,
-    message: 0,
-    service: 0,
-    emergency: 0,
-    total: 0,
-  });
+  const [counts, setCounts] = useState<NotificationCounts>(emptyCounts);
   const [settings, setSettings] = useState<AdminNotificationSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
 
@@ -65,15 +70,15 @@ export function useAdminNotifications() {
 
       if (error) throw error;
 
-      const countsByCategory = (data || []).reduce(
-        (acc, item) => {
-          const cat = item.category as keyof Omit<NotificationCounts, 'total'>;
-          acc[cat] = (acc[cat] || 0) + 1;
-          acc.total += 1;
-          return acc;
-        },
-        { booking: 0, message: 0, service: 0, emergency: 0, total: 0 } as NotificationCounts
-      );
+      const countsByCategory = (data || []).reduce((acc, item) => {
+        const cat = item.category as AdminNotificationCategory;
+        // An unknown category would otherwise inflate `total` with no bucket to
+        // clear it from, leaving the badge permanently unread.
+        if (!(cat in acc)) return acc;
+        acc[cat] += 1;
+        acc.total += 1;
+        return acc;
+      }, emptyCounts());
 
       setCounts(countsByCategory);
     } catch (error) {
@@ -131,7 +136,7 @@ export function useAdminNotifications() {
   }, [user]);
 
   // Mark notifications as read by category
-  const markCategoryAsRead = useCallback(async (category: 'booking' | 'message' | 'service' | 'emergency') => {
+  const markCategoryAsRead = useCallback(async (category: AdminNotificationCategory) => {
     if (!user) return;
 
     try {
