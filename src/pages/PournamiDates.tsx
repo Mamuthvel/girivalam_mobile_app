@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,14 @@ import { SpiritualCard } from "@/components/SpiritualCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { getPournamiForYear, usePournamiDates } from "@/hooks/get-pournamidates";
+import { istTimeLabel } from "@/lib/pournami-astro";
+import { crowdFor, type CrowdLevel } from "@/data/pournami-crowd";
+import { currentMonth, monthRef } from "@/lib/girivalam-months";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
     Calendar,
+    Flame,
+    Milestone,
     Moon,
     Users,
     Clock,
@@ -19,31 +24,24 @@ import {
     AlertCircle,
 } from "lucide-react";
 
-// Editorial crowd expectation per Purnima (festival months draw the largest crowds).
-const CROWD_BY_NAME: Record<string, "Very High" | "High" | "Medium"> = {
-    "Kartik Purnima": "Very High",      // Karthigai Deepam
-    "Vaishakha Purnima": "Very High",   // Buddha Purnima
-    "Magha Purnima": "Very High",
-    "Phalguna Purnima": "Very High",    // Holi / Masi Magam
-    "Ashadha Purnima": "Very High",     // Guru Purnima
-    "Ashwin Purnima": "High",           // Sharad Purnima
-    "Chaitra Purnima": "High",
-    "Shravana Purnima": "High",
-    "Margashirsha Purnima": "High",
-    "Pausha Purnima": "High",
-    "Bhadrapada Purnima": "Medium",
-    "Jyeshtha Purnima": "Medium",
-};
-
-const crowdFor = (name: string): "Very High" | "High" | "Medium" => {
-    const key = Object.keys(CROWD_BY_NAME).find((k) => name.startsWith(k));
-    return key ? CROWD_BY_NAME[key] : "High";
-};
+/**
+ * One canonical URL for this page, used by the canonical tag, the breadcrumb and
+ * every Event entry.
+ *
+ * The trailing slash matters: react-snap prerenders this route to a directory,
+ * and Search Console shows Google has indexed the slashed form (1,055 impressions
+ * in the 17 Nov sample) while the slashless twin picked up only 9. The canonical
+ * tag used to point at the slashless one, so the tag and the indexed URL
+ * disagreed. Aligning to the URL that already holds the equity is the safe
+ * direction. `/pournami-dates` renders this same component and so emits this
+ * same canonical, which is what consolidates the two routes.
+ */
+const CANONICAL = "https://mygirivalam.in/blog/pournami-dates-2025-2026/";
 
 const PournamiDates = () => {
-    const { dates } = usePournamiDates();
+    const { dates, nextPournamiEntry, today } = usePournamiDates();
     const { t } = useLanguage();
-    const crowdLabel = (c: "Very High" | "High" | "Medium") =>
+    const crowdLabel = (c: CrowdLevel) =>
         t(c === "Very High" ? "pd.crowdVeryHigh" : c === "High" ? "pd.crowdHigh" : "pd.crowdMedium");
 
     // Rolling two-year window so the page never goes stale.
@@ -55,156 +53,135 @@ const PournamiDates = () => {
             [currentYear, nextYear].map((year) => ({
                 year,
                 items: getPournamiForYear(year).map((d) => ({
+                    monthSlug: monthRef(d.dateObj.getFullYear(), d.dateObj.getMonth() + 1).slug,
                     month: format(d.dateObj, "MMMM"),
                     date: format(d.dateObj, "MMM d, yyyy"),
                     name: d.name,
                     crowd: crowdFor(d.name),
+                    // The exact instant is the thing no competing calendar publishes.
+                    moonTime: istTimeLabel(d.fullMoonAt),
+                    uncertain: d.uncertain,
                 })),
             })),
         [currentYear, nextYear]
     );
 
-    // Structured-data Events for the next upcoming Pournami dates (self-updating).
-    const upcomingEvents = useMemo(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return dates
-            .filter((d) => d.dateObj >= today)
-            .slice(0, 8)
-            .map((d) => {
-                const start = new Date(d.dateObj);
-                start.setHours(18, 0, 0, 0);
-                const end = new Date(d.dateObj);
-                end.setDate(end.getDate() + 1);
-                end.setHours(6, 0, 0, 0);
-                const fmt = (dt: Date) =>
-                    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(
-                        dt.getDate()
-                    ).padStart(2, "0")}T${String(dt.getHours()).padStart(2, "0")}:00`;
-                return {
-                    name: `Pournami Girivalam — ${format(d.dateObj, "MMMM yyyy")}`,
-                    startDate: fmt(start),
-                    endDate: fmt(end),
-                };
-            });
-    }, [dates]);
+    /**
+     * Event schema for the upcoming Pournami nights, self-updating.
+     *
+     * Times are written with an explicit +05:30 offset. The previous version
+     * formatted them from the device clock, so the same page described a
+     * different walk window depending on where the reader happened to be.
+     * 6 PM–6 AM is the site's editorial walk window; the exact astronomical
+     * instant goes in the description, where it can be stated as fact.
+     */
+    const eventSchema = useMemo(
+        () =>
+            dates
+                .filter((d) => d.date >= today)
+                .slice(0, 8)
+                .map((d) => ({
+                    "@context": "https://schema.org",
+                    "@type": "Event",
+                    name: `${d.name} Girivalam — ${format(d.dateObj, "MMMM yyyy")}`,
+                    startDate: `${d.date}T18:00:00+05:30`,
+                    endDate: `${format(addDays(d.dateObj, 1), "yyyy-MM-dd")}T06:00:00+05:30`,
+                    eventStatus: "https://schema.org/EventScheduled",
+                    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+                    isAccessibleForFree: true,
+                    location: {
+                        "@type": "Place",
+                        name: "Arunachala Girivalam Path",
+                        address: {
+                            "@type": "PostalAddress",
+                            addressLocality: "Tiruvannamalai",
+                            addressRegion: "Tamil Nadu",
+                            postalCode: "606601",
+                            addressCountry: "IN",
+                        },
+                    },
+                    description: `Sacred full moon Girivalam — the 14 km barefoot circumambulation of Arunachala Hill at Tiruvannamalai. Exact full moon: ${format(d.dateObj, "d MMMM yyyy")} at ${istTimeLabel(d.fullMoonAt)} IST.`,
+                    organizer: { "@type": "Organization", name: "MyGirivalam.in", url: "https://mygirivalam.in" },
+                    url: CANONICAL,
+                })),
+        [dates, today]
+    );
 
-    useEffect(() => {
-        // Add Article Schema
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.text = JSON.stringify({
+    const articleSchema = useMemo(
+        () => ({
             "@context": "https://schema.org",
             "@type": "Article",
             headline: `Pournami Girivalam Dates ${currentYear}-${nextYear} | Full Moon Calendar`,
-            description:
-                `Complete list of Pournami Girivalam dates for ${currentYear}-${nextYear}. Plan your sacred circumambulation during full moon at Tiruvannamalai.`,
-            author: {
-                "@type": "Organization",
-                name: "MyGirivalam.in",
-            },
+            description: `Complete list of Pournami Girivalam dates for ${currentYear}-${nextYear}. Plan your sacred circumambulation during full moon at Tiruvannamalai.`,
+            author: { "@type": "Organization", name: "MyGirivalam.in" },
             publisher: {
                 "@type": "Organization",
                 name: "MyGirivalam.in",
-                logo: {
-                    "@type": "ImageObject",
-                    url: "https://mygirivalam.in/logo.svg",
-                },
+                logo: { "@type": "ImageObject", url: "https://mygirivalam.in/logo.svg" },
             },
             datePublished: "2025-01-14",
-            dateModified: new Date().toISOString().slice(0, 10),
-            mainEntityOfPage: {
-                "@type": "WebPage",
-                "@id": "https://mygirivalam.in/blog/pournami-dates-2025-2026",
-            },
-        });
-        document.head.appendChild(script);
+            dateModified: today,
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
+        }),
+        [currentYear, nextYear, today]
+    );
 
-        // Add Breadcrumb Schema
-        const breadcrumbScript = document.createElement("script");
-        breadcrumbScript.type = "application/ld+json";
-        breadcrumbScript.text = JSON.stringify({
+    const breadcrumbSchema = useMemo(
+        () => ({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
-            "itemListElement": [{
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": "https://mygirivalam.in/"
-            }, {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "Blog",
-                "item": "https://mygirivalam.in/blog"
-            }, {
-                "@type": "ListItem",
-                "position": 3,
-                "name": `Pournami Dates ${currentYear}-${nextYear}`,
-                "item": "https://mygirivalam.in/blog/pournami-dates-2025-2026"
-            }]
-        });
-        document.head.appendChild(breadcrumbScript);
-
-        // Event schema for each upcoming Pournami Girivalam (self-updating).
-        const eventScripts = upcomingEvents.map((ev) => {
-            const s = document.createElement("script");
-            s.type = "application/ld+json";
-            s.text = JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Event",
-                name: ev.name,
-                startDate: ev.startDate,
-                endDate: ev.endDate,
-                eventStatus: "https://schema.org/EventScheduled",
-                eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-                isAccessibleForFree: true,
-                location: {
-                    "@type": "Place",
-                    name: "Arunachala Girivalam Path",
-                    address: {
-                        "@type": "PostalAddress",
-                        addressLocality: "Tiruvannamalai",
-                        addressRegion: "Tamil Nadu",
-                        postalCode: "606601",
-                        addressCountry: "IN",
-                    },
+            itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://mygirivalam.in/" },
+                { "@type": "ListItem", position: 2, name: "Blog", item: "https://mygirivalam.in/blog" },
+                {
+                    "@type": "ListItem",
+                    position: 3,
+                    name: `Pournami Dates ${currentYear}-${nextYear}`,
+                    item: CANONICAL,
                 },
-                description: "Sacred full moon Girivalam circumambulation of the 14km Arunachala Hill path in Tiruvannamalai. Millions of pilgrims walk barefoot during Pournami night.",
-                organizer: {
-                    "@type": "Organization",
-                    name: "MyGirivalam.in",
-                    url: "https://mygirivalam.in",
-                },
-                url: "https://mygirivalam.in/blog/pournami-dates-2025-2026",
-            });
-            document.head.appendChild(s);
-            return s;
-        });
+            ],
+        }),
+        [currentYear, nextYear]
+    );
 
-        return () => {
-            document.head.removeChild(script);
-            document.head.removeChild(breadcrumbScript);
-            eventScripts.forEach((s) => document.head.removeChild(s));
-        };
-    }, [currentYear, nextYear, upcomingEvents]);
+    const nextDateLabel = format(nextPournamiEntry.dateObj, "EEE d MMM yyyy");
+    const thisMonth = currentMonth();
+    const metaDescription =
+        `Next Girivalam: ${nextDateLabel} (${nextPournamiEntry.name}) — full moon ` +
+        `${istTimeLabel(nextPournamiEntry.fullMoonAt)} IST. Every Pournami date for ` +
+        `Tiruvannamalai ${currentYear} & ${nextYear} with timings and crowd levels.`;
 
     const getCrowdColor = (crowd: string) => {
         switch (crowd) {
             case "Very High":
-                return "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400";
+                return "bg-kumkum/10 text-kumkum";
             case "High":
-                return "bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400";
+                return "bg-warning/10 text-warning";
             default:
-                return "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400";
+                return "bg-success/10 text-success";
         }
     };
 
     return (
         <div className="min-h-screen bg-background">
             <Helmet>
-                <title>{`Girivalam Dates ${currentYear} & ${nextYear} — Full Pournami Calendar | MyGirivalam.in`}</title>
-                <meta name="description" content={`Girivalam dates ${currentYear} & ${nextYear}: every Pournami (full moon) date for Tiruvannamalai, with crowd levels and prep tips. Plus a live map and GPS tracker for your walk.`} />
-                <link rel="canonical" href="https://mygirivalam.in/blog/pournami-dates-2025-2026" />
+                {/* Shorter than before: the old title ran to 70 characters and was
+                    truncated on mobile, where 85% of this page's traffic comes from. */}
+                <title>{`Girivalam Dates ${currentYear} & ${nextYear} — Pournami Calendar & Timings`}</title>
+                {/* Answer-first. "girivalam dates 2026" drew 254 impressions and one
+                    click in the 17 Nov sample; the snippet never contained a date.
+                    This one leads with the next date and its exact full-moon time,
+                    and needs no yearly edit. */}
+                <meta name="description" content={metaDescription} />
+                <link rel="canonical" href={CANONICAL} />
+                <meta property="og:title" content={`Girivalam Dates ${currentYear} & ${nextYear} — Pournami Calendar`} />
+                <meta property="og:description" content={metaDescription} />
+                <meta property="og:url" content={CANONICAL} />
+                {/* Rendered here rather than appended to document.head in an effect,
+                    so react-snap captures it in the prerendered HTML. */}
+                <script type="application/ld+json">{JSON.stringify(articleSchema)}</script>
+                <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+                <script type="application/ld+json">{JSON.stringify(eventSchema)}</script>
             </Helmet>
             <SiteHeader />
 
@@ -218,8 +195,33 @@ const PournamiDates = () => {
                     <h1 className="font-playfair text-4xl md:text-6xl font-bold mb-4 text-foreground">
                         {t('pd.h1').replace('{years}', `${currentYear}-${nextYear}`)}
                     </h1>
-                    <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+                    <p className="text-xl text-muted-foreground mb-6 max-w-3xl mx-auto">
                         {t('pd.intro').replace('{years}', `${currentYear}-${nextYear}`)}
+                    </p>
+
+                    {/* The answer, above the fold and first in the DOM — this is what
+                        the date queries are actually asking for. */}
+                    <p className="mx-auto mb-8 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl bg-primary/10 px-4 py-3 text-base ring-1 ring-primary/20">
+                        <Moon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        <span className="font-semibold text-foreground">{t('pd.nextGirivalam')}:</span>
+                        <span className="font-semibold text-foreground">{nextDateLabel}</span>
+                        <span className="text-muted-foreground">· {nextPournamiEntry.name}</span>
+                        <span className="text-muted-foreground">
+                            · {t('pd.fullMoon').replace('{time}', istTimeLabel(nextPournamiEntry.fullMoonAt))}
+                        </span>
+                    </p>
+
+                    {/* "girivalam today", "this month girivalam date" and
+                        "girivalam this month" are 1,153 impressions a quarter at
+                        0.69% CTR — they need somewhere current to land. */}
+                    <p className="mb-8">
+                        <Link
+                            to={`/girivalam-dates/${thisMonth.slug}`}
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80"
+                        >
+                            {t('pd.thisMonth').replace('{month}', thisMonth.label)}
+                            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </Link>
                     </p>
                 </div>
             </div>
@@ -263,8 +265,22 @@ const PournamiDates = () => {
                                         </div>
                                         <Moon className="h-5 w-5 text-primary" />
                                     </div>
-                                    <p className="text-sm font-medium text-foreground/80 mb-3">
+                                    <p className="text-sm font-medium text-foreground/80 mb-1">
                                         {item.name}
+                                    </p>
+                                    {/* Month page link — carries the internal link graph for
+                                        /girivalam-dates/<month>-<year> and gives month-specific
+                                        queries somewhere of their own to land. */}
+                                    <Link
+                                        to={`/girivalam-dates/${item.monthSlug}`}
+                                        className="mb-1 inline-block text-xs text-primary underline underline-offset-4 hover:text-primary/80"
+                                    >
+                                        {item.month} {section.year} Girivalam details
+                                    </Link>
+                                    {/* No competing calendar publishes the exact instant. */}
+                                    <p className="mb-3 text-xs text-muted-foreground">
+                                        {t('pd.fullMoon').replace('{time}', item.moonTime)}
+                                        {item.uncertain && ` · ${t('pd.confirmDate')}`}
                                     </p>
                                     <Badge className={getCrowdColor(item.crowd)}>
                                         <Users className="h-3 w-3 mr-1" />
@@ -276,12 +292,44 @@ const PournamiDates = () => {
                     </section>
                 ))}
 
+                {/* Related guides.
+                    This page carries 1,055 impressions/day while
+                    /girivalam-distance-route and /ashta-lingam-temples draw none, and
+                    nothing here linked to either. Descriptive anchors, from the page
+                    that actually has the authority to pass. */}
+                <section className="mb-16">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Link to="/girivalam-distance-route" className="group">
+                            <SpiritualCard className="h-full p-6 transition-shadow hover:shadow-lg">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Milestone className="h-5 w-5 text-primary" />
+                                    <h3 className="font-playfair text-xl font-bold group-hover:text-primary">
+                                        {t('pd.relatedDistance')}
+                                    </h3>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{t('pd.relatedDistanceDesc')}</p>
+                            </SpiritualCard>
+                        </Link>
+                        <Link to="/ashta-lingam-temples" className="group">
+                            <SpiritualCard className="h-full p-6 transition-shadow hover:shadow-lg">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Flame className="h-5 w-5 text-primary" />
+                                    <h3 className="font-playfair text-xl font-bold group-hover:text-primary">
+                                        {t('pd.relatedLingam')}
+                                    </h3>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{t('pd.relatedLingamDesc')}</p>
+                            </SpiritualCard>
+                        </Link>
+                    </div>
+                </section>
+
                 {/* Best Time to Start */}
                 <section className="mb-16">
-                    <SpiritualCard className="p-8 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/20 dark:to-blue-950/20 border-sky-200 dark:border-sky-800">
+                    <SpiritualCard className="p-8 bg-gradient-to-br from-primary/10 to-primary/10 border-primary/30">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-sky-100 dark:bg-sky-900/30 rounded-xl">
-                                <Clock className="h-6 w-6 text-sky-600 dark:text-sky-400" />
+                            <div className="p-3 bg-primary/10 rounded-xl">
+                                <Clock className="h-6 w-6 text-accent" />
                             </div>
                             <h2 className="font-playfair text-3xl font-bold">
                                 {t('pd.bestTimeTitle')}
@@ -291,7 +339,7 @@ const PournamiDates = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="text-center p-4 bg-white/50 dark:bg-background/50 rounded-lg">
                                 <p className="text-sm text-muted-foreground mb-2">{t('pd.idealStart')}</p>
-                                <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">
+                                <p className="text-2xl font-bold text-accent">
                                     6:00 PM - 8:00 PM
                                 </p>
                                 <p className="text-sm text-muted-foreground mt-2">
@@ -299,9 +347,9 @@ const PournamiDates = () => {
                                 </p>
                             </div>
 
-                            <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                            <div className="text-center p-4 bg-kumkum/10 rounded-lg">
                                 <p className="text-sm text-muted-foreground mb-2">{t('pd.avoid')}</p>
-                                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                <p className="text-2xl font-bold text-kumkum">
                                     10:00 PM - 2:00 AM
                                 </p>
                                 <p className="text-sm text-muted-foreground mt-2">
@@ -309,9 +357,9 @@ const PournamiDates = () => {
                                 </p>
                             </div>
 
-                            <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                            <div className="text-center p-4 bg-success/10 rounded-lg">
                                 <p className="text-sm text-muted-foreground mb-2">{t('pd.lessCrowded')}</p>
-                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                <p className="text-2xl font-bold text-success">
                                     3:00 AM - 6:00 AM
                                 </p>
                                 <p className="text-sm text-muted-foreground mt-2">
@@ -324,10 +372,10 @@ const PournamiDates = () => {
 
                 {/* Tips for Pournami Girivalam */}
                 <section className="mb-16">
-                    <SpiritualCard className="p-8 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
+                    <SpiritualCard className="p-8 bg-gradient-to-br from-warning/10 to-warning/10 border-warning/30">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
-                                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                            <div className="p-3 bg-warning/10 rounded-xl">
+                                <AlertCircle className="h-6 w-6 text-warning" />
                             </div>
                             <h2 className="font-playfair text-3xl font-bold">
                                 {t('pd.tipsTitle')}
@@ -349,7 +397,7 @@ const PournamiDates = () => {
                                     key={index}
                                     className="flex items-start gap-3 p-3 bg-white/50 dark:bg-background/50 rounded-lg"
                                 >
-                                    <ArrowRight className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                                    <ArrowRight className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
                                     <p className="text-foreground/90">{tip}</p>
                                 </div>
                             ))}

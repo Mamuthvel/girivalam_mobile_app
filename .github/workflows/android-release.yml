@@ -1,0 +1,94 @@
+name: Android release (APK + AAB)
+
+# Builds the signed Play Store bundle and a signed APK, and attaches both to the
+# run as downloadable artifacts.
+#
+# One-time setup — add these four repository secrets
+# (Settings -> Secrets and variables -> Actions):
+#
+#   ANDROID_KEYSTORE_BASE64   base64 of android/girivalam-release.keystore
+#                             Windows: certutil -encode girivalam-release.keystore out.txt
+#                             macOS/Linux: base64 -i girivalam-release.keystore | pbcopy
+#   ANDROID_STORE_PASSWORD    storePassword from android/keystore.properties
+#   ANDROID_KEY_ALIAS         keyAlias     from android/keystore.properties
+#   ANDROID_KEY_PASSWORD      keyPassword  from android/keystore.properties
+#
+# The keystore itself stays out of git (see .gitignore); CI reconstructs it from
+# the secret at build time and the runner is destroyed afterwards.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      # Capacitor 8 needs JDK 21. The Android SDK is preinstalled on this runner.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle and sync to Android
+        run: |
+          npm run build
+          npx cap sync android
+
+      - name: Restore signing config
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not set — add the four signing secrets listed in this workflow."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/girivalam-release.keystore
+          # build.gradle reads these from android/keystore.properties.
+          {
+            echo "storeFile=../girivalam-release.keystore"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/keystore.properties
+
+      - name: Build signed APK and AAB
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleRelease bundleRelease
+
+      # Remove the reconstructed secrets before anything else runs.
+      - name: Clean up signing material
+        if: always()
+        run: rm -f android/girivalam-release.keystore android/keystore.properties
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: girivalam-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: girivalam-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error

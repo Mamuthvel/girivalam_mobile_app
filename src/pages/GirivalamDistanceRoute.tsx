@@ -17,22 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Seo from "@/components/Seo";
 import { useLanguage } from "@/contexts/LanguageContext";
-
-// Cumulative distances derived from the mapped Girivalam path (src/data/girivalam-path.ts),
-// matched to each Ashta Lingam temple's coordinates (src/data/landmarks.ts).
-// `dir` is a compass code translated via t('dist.dir.<code>'); fromKey/toKey are
-// translation keys for the start/finish temple label (Lingam names stay as proper nouns).
-const STAGES = [
-  { fromKey: "dist.start", to: "Indra Lingam", dir: "E", cumulative: 0.2, leg: 0.2 },
-  { from: "Indra Lingam", to: "Agni Lingam", dir: "SE", cumulative: 1.6, leg: 1.4 },
-  { from: "Agni Lingam", to: "Yama Lingam", dir: "S", cumulative: 3.3, leg: 1.7 },
-  { from: "Yama Lingam", to: "Nirruti Lingam", dir: "SW", cumulative: 5.1, leg: 1.8 },
-  { from: "Nirruti Lingam", to: "Varuna Lingam", dir: "W", cumulative: 6.6, leg: 1.5 },
-  { from: "Varuna Lingam", to: "Vayu Lingam", dir: "NW", cumulative: 8.6, leg: 2.0 },
-  { from: "Vayu Lingam", to: "Kubera Lingam", dir: "N", cumulative: 10.1, leg: 1.5 },
-  { from: "Kubera Lingam", to: "Esanya Lingam", dir: "NE", cumulative: 12.0, leg: 1.9 },
-  { from: "Esanya Lingam", toKey: "dist.finish", dir: "E", cumulative: 13.8, leg: 1.8 },
-] as const;
+import { GIRIVALAM_STAGES } from "@/data/girivalam-stages";
 
 const MODES = [
   { icon: Footprints, nameKey: "dist.mode.walkTradName", paceKey: "dist.mode.walkTradPace", timeKey: "dist.mode.walkTradTime" },
@@ -95,6 +80,14 @@ const GirivalamDistanceRoute = () => {
                 acceptedAnswer: {
                   "@type": "Answer",
                   text: "Most devotees walking barefoot at a devotional pace with stops at the 8 Ashta Lingam temples take 4–6 hours. A brisk walk with footwear and fewer stops can take 3–4 hours.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Where is the Girivalam starting point?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Girivalam starts and ends at Arunachaleswarar Temple in Tiruvannamalai. Devotees leave by the eastern Raja Gopuram side, reach Indra Lingam about 0.2 km along the path, and walk clockwise from there. There is no fixed gate — you may join the 14 km circular route at any point and complete the full circle back to where you began.",
                 },
               },
               {
@@ -187,7 +180,7 @@ const GirivalamDistanceRoute = () => {
                 </tr>
               </thead>
               <tbody>
-                {STAGES.map((s, i) => (
+                {GIRIVALAM_STAGES.map((s, i) => (
                   <tr key={i} className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}>
                     <td className="p-3">
                       <span className="font-medium">{"fromKey" in s ? t(s.fromKey) : s.from}</span>

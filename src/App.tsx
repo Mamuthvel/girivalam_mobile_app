@@ -21,6 +21,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
 const GirivalamJourneyGuide = lazy(() => import("./pages/GirivalamJourneyGuide"));
 const PournamiDates = lazy(() => import("./pages/PournamiDates"));
+const GirivalamMonth = lazy(() => import("./pages/GirivalamMonth"));
 const MyGirivalam = lazy(() => import("./pages/MyGirivalam"));
 const MyGirivalamHistory = lazy(() => import("./pages/MyGirivalamHistory"));
 const Feedback = lazy(() => import("./pages/Feedback"));
@@ -112,6 +113,8 @@ const App = () => (
         />
         <Route path="/girivalam-services" element={<Services />} />
         <Route path="/pournami-dates" element={<PournamiDates />} />
+        {/* Per-month calendar pages, e.g. /girivalam-dates/october-2026 */}
+        <Route path="/girivalam-dates/:slug" element={<GirivalamMonth />} />
         <Route
           path="/dashboard"
           element={

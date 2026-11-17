@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Calendar, MessageSquare, Wrench, AlertTriangle, X, Check } from 'lucide-react';
+import { Bell, Calendar, MessageSquare, Wrench, AlertTriangle, HandPlatter, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { useAdminNotifications, AdminNotification } from '@/hooks/useAdminNotifications';
+import { useAdminNotifications, AdminNotification, AdminNotificationCategory } from '@/hooks/useAdminNotifications';
 import { formatDistanceToNow } from 'date-fns';
 
 const categoryIcons = {
@@ -17,6 +17,7 @@ const categoryIcons = {
   message: MessageSquare,
   service: Wrench,
   emergency: AlertTriangle,
+  annadhanam_reminder: HandPlatter,
 };
 
 const categoryColors = {
@@ -24,6 +25,7 @@ const categoryColors = {
   message: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   service: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   emergency: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  annadhanam_reminder: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
 const AdminNotificationBell: React.FC = () => {
@@ -74,7 +76,7 @@ const AdminNotificationBell: React.FC = () => {
                     "h-7 text-xs gap-1",
                     categoryColors[category as keyof typeof categoryColors]
                   )}
-                  onClick={() => markCategoryAsRead(category as any)}
+                  onClick={() => markCategoryAsRead(category as AdminNotificationCategory)}
                 >
                   <Icon className="h-3 w-3" />
                   {category}: {count}
