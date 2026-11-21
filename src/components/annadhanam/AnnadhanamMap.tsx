@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { createTileLayer, trimAttributionPrefix } from "@/lib/map-tiles";
 import { ListingOccurrence } from "@/types/annadhanam";
 
 interface Props {
@@ -37,10 +38,8 @@ export default function AnnadhanamMap({ occurrences, userLocation, onSelect }: P
       ? [userLocation.lat, userLocation.lng]
       : [12.2253, 79.0747]; // Arunachala
     const map = L.map(containerRef.current, { zoomControl: true }).setView(center, 14);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-      maxZoom: 19,
-    }).addTo(map);
+    trimAttributionPrefix(map);
+    createTileLayer().addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
   }, [userLocation]);

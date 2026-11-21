@@ -10,6 +10,8 @@ import { AlertCircle } from 'lucide-react';
 import {
   createSocialUserMarker,
   createMyLocationMarker,
+  createTileLayer,
+  trimAttributionPrefix,
   MAP_THEMES,
   type MapTheme,
   getLastSeenLabel,
@@ -63,11 +65,13 @@ const LiveGroupMap: React.FC<LiveGroupMapProps> = ({
       center:           [12.2307, 79.0628],
       zoom:             15,
       zoomControl:      true,
-      attributionControl: false,
+      attributionControl: true,
     });
 
-    const theme = MAP_THEMES['standard'];
-    tileRef.current = L.tileLayer(theme.url, { maxZoom: 19, maxNativeZoom: theme.maxNativeZoom }).addTo(map.current);
+    // Provider + OpenStreetMap credit is required by the tile licences.
+    trimAttributionPrefix(map.current);
+
+    tileRef.current = createTileLayer('standard').addTo(map.current);
 
     // Sacred Girivalam path ring
     L.circle([12.2307, 79.0628], {
@@ -89,8 +93,7 @@ const LiveGroupMap: React.FC<LiveGroupMapProps> = ({
   useEffect(() => {
     if (!map.current) return;
     if (tileRef.current) map.current.removeLayer(tileRef.current);
-    const theme = MAP_THEMES[mapTheme];
-    tileRef.current = L.tileLayer(theme.url, { maxZoom: 19, maxNativeZoom: theme.maxNativeZoom }).addTo(map.current);
+    tileRef.current = createTileLayer(mapTheme).addTo(map.current);
     map.current.getContainer().classList.toggle('map-dark', mapTheme === 'dark');
   }, [mapTheme]);
 

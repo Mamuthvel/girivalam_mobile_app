@@ -12,7 +12,8 @@ import {
   createPhotoMarker,
   buildGlassPopup,
   createMyLocationMarker,
-  MAP_THEMES,
+  createTileLayer,
+  trimAttributionPrefix,
   type MapTheme,
   type MarkerType,
   type PopupData,
@@ -256,19 +257,18 @@ const Map: React.FC<MapProps> = ({
       center: defaultCenter,
       zoom: defaultZoom,
       zoomControl: true,
-      attributionControl: false,
+      attributionControl: true,
       dragging: false,
       touchZoom: false,
       scrollWheelZoom: true,
     });
 
+    // OpenStreetMap / provider credit is required — keep the control, drop the
+    // "Leaflet" prefix so it stays a single unobtrusive line.
+    trimAttributionPrefix(mapInstance.current);
+
     // Add themed tile layer
-    const initialTheme = MAP_THEMES["standard"];
-    tileLayerRef.current = L.tileLayer(initialTheme.url, {
-      maxZoom: 19,
-      maxNativeZoom: initialTheme.maxNativeZoom,
-      attribution: initialTheme.attribution,
-    }).addTo(mapInstance.current);
+    tileLayerRef.current = createTileLayer("standard").addTo(mapInstance.current);
 
     // Add Girivalam path
     const pathCoords: [number, number][] = girivalamPath.map((p) => [p.lat, p.lng]);
@@ -412,12 +412,7 @@ const Map: React.FC<MapProps> = ({
     if (tileLayerRef.current) {
       mapInstance.current.removeLayer(tileLayerRef.current);
     }
-    const theme = MAP_THEMES[mapTheme];
-    tileLayerRef.current = L.tileLayer(theme.url, {
-      maxZoom: 19,
-      maxNativeZoom: theme.maxNativeZoom,
-      attribution: theme.attribution,
-    }).addTo(mapInstance.current);
+    tileLayerRef.current = createTileLayer(mapTheme).addTo(mapInstance.current);
 
     // Apply dark class for Leaflet container styling
     const container = mapInstance.current.getContainer();

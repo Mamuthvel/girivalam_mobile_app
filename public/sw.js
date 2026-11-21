@@ -1,22 +1,23 @@
 // MyGirivalam Service Worker v2
 // Strategies:
 //  - App shell (HTML + Vite assets): network-first, fall back to cache
-//  - Map tiles (OSM / Carto / Esri): cache-first, fetch & cache on miss, max 600 tiles
+//  - Map tiles (CARTO / Esri / MapTiler): cache-first, fetch & cache on miss, max 600 tiles
 //  - Everything else: network-only (Supabase API, auth, etc.)
 
 const APP_CACHE  = 'gv-app-v3';
-const TILE_CACHE = 'gv-tiles-v3';
+const TILE_CACHE = 'gv-tiles-v4';
 const MAX_TILES  = 600;
 
 // Tile CDN patterns
+// Tile CDN patterns. OpenStreetMap's volunteer servers (tile.openstreetmap.org,
+// tile.openstreetmap.fr) are deliberately absent: their Tile Usage Policy
+// forbids app basemaps and bulk/offline tile caching, and they block clients
+// that do it. Basemaps come from CDNs built for app traffic instead.
 const TILE_HOSTS = [
-  'tile.openstreetmap.org',
   'basemaps.cartocdn.com',
   'server.arcgisonline.com',
   'arcgisonline.com',
-  'a.tile.openstreetmap.org',
-  'b.tile.openstreetmap.org',
-  'c.tile.openstreetmap.org',
+  'api.maptiler.com',
 ];
 
 // Static app-shell assets cached at install time

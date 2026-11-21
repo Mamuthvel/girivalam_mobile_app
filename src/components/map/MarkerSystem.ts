@@ -254,37 +254,19 @@ export const createMyLocationMarker = (isTracking: boolean): L.DivIcon =>
 
 // ─── Map Tile Themes ─────────────────────────────────────────────────────────
 
-// All tile sources below are key-free (OpenStreetMap & Esri public services), so
-// the basemap renders without an API key. `maxNativeZoom` lets Leaflet upscale
-// tiles for providers whose imagery stops before zoom 19.
-export const MAP_THEMES = {
-  standard: {
-    label: "Standard",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenStreetMap contributors",
-    maxNativeZoom: 19,
-  },
-  dark: {
-    label: "Dark",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    attribution: "© Esri",
-    maxNativeZoom: 16,
-  },
-  spiritual: {
-    label: "Light",
-    url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-    attribution: "© OpenStreetMap contributors, Humanitarian OSM Team",
-    maxNativeZoom: 19,
-  },
-  satellite: {
-    label: "Satellite",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: "© Esri",
-    maxNativeZoom: 19,
-  },
-} as const;
-
-export type MapTheme = keyof typeof MAP_THEMES;
+// Tile sources live in `@/lib/map-tiles` so every map in the app shares one
+// policy-compliant basemap list. Re-exported here for existing call sites.
+export {
+  MAP_THEMES,
+  DEFAULT_MAP_THEME,
+  TILE_PROVIDER,
+  createTileLayer,
+  tileLayerOptions,
+  rasterFallbackFor,
+  trimAttributionPrefix,
+  type MapTheme,
+  type TileSource,
+} from "@/lib/map-tiles";
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 

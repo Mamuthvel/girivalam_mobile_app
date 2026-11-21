@@ -14,7 +14,8 @@
     "android": "cap open android",
     "ios": "cap open ios",
     "sync": "cap sync",
-    "verify:pournami": "node --experimental-strip-types scripts/verify-pournami.ts"
+    "verify:pournami": "node --experimental-strip-types scripts/verify-pournami.ts",
+    "verify:tiles": "node scripts/check-map-tiles.mjs"
   },
   "reactSnap": {
     "source": "dist",
