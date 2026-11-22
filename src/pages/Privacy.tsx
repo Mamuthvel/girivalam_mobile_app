@@ -162,7 +162,7 @@ const Privacy = () => {
               <p>
                 If you have any questions about this Privacy Policy, please contact us at:
                 <br />
-                Email: privacy@arunachalavibe.com
+                Email: chandruvscn143@gmail.com
                 <br />
                 Address: Tiruvannamalai, Tamil Nadu, India
               </p>

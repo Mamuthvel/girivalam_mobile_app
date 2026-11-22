@@ -146,7 +146,7 @@ const Terms = () => {
               <p>
                 If you have any questions about these Terms of Service, please contact us at:
                 <br />
-                Email: legal@arunachalavibe.com
+                Email: chandruvscn143@gmail.com
                 <br />
                 Address: Tiruvannamalai, Tamil Nadu, India
               </p>
